@@ -1,4 +1,4 @@
-README Austin - Urban Homogenization database generator
+Urban Homogenization database generator
 ============================================
 Will Pearse (wdpearse@umn.edu)
 

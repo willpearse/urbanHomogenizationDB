@@ -2,13 +2,13 @@
 #Example:
 #./make_database.rb thirdPass.db /Users/will/Dropbox/homogenization/data/CFANSClone/
 
-
-require_relative 'lib/LoadingData.rb'
+require_relative 'lib/LoadingVegData.rb'
+require_relative 'lib/LoadingSoilData.rb'
 require_relative 'lib/ProcessingData.rb'
 
 #MAIN
 puts "\nUrban Homogenization of America - data cleaning and database generation script"
-puts "1/20/2013 - Will Pearse (wdpearse@umn.edu)"
+puts "2013-4-19 - Will Pearse (wdpearse@umn.edu)"
 puts "Not recommended for use over a server. Watch for newly-created empty folders"
 puts " - these may indicate that XLSX files are being multiply loaded"
 puts "Each full stop = one city's data loaded"
@@ -27,25 +27,30 @@ if ARGV.length == 2
       abort "\nERROR: Cannot load specified CFANS directory. Exiting with no cleanup..."
     end
     
-    #iTree
+    ########################
+    #iTree##################
+    ########################
     print "\nLoading tree survey data";$stdout.flush
     iTree = DataFrame.new({:city_parcel_plot=>[],:tree_no=>[],:sp_common=>[],:dbh=>[],:height=>[],:ground_area=>[],:condition=>[],:leaf_area=>[],:leaf_biomass=>[],:leaf_area_index=>[],:carbon_storage=>[],:gross_carbon_seq=>[],:money_value=>[],:street=>[],:native=>[]})
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Lost Valley Prairie iTree summary.csv")
-  	iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/St. Croix Savanna iTree summary.csv")
-  	iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/BOS_Master_iTree.xlsx")
+    iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/St. Croix Savanna iTree summary.csv")
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Wolsfeld Woods SNA iTree summary.csv")
-  	iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Wood Rill SNA iTree summary.csv")
-  	Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/iTree Data" do |file|
-  	  iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
-	  end
+    iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Wood Rill SNA iTree summary.csv")
+    Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/iTree Data" do |file|
+      iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
+    end
     print ".";$stdout.flush
-	  Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Baltimore" do |file|
-  	  iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
-	  end
+    Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Baltimore" do |file|
+      iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
+    end
+    print ".";$stdout.flush
+    iTree << read_iTree('Data-Parcel-Maps/Data-Biophysical/Tree Sampling/BOS_Master_iTree.xlsx')
     print ".";$stdout.flush
     print " - #{iTree.nrow} rows of data read"
-
-	  #Vegetative surveys
+    
+    ########################
+    #Vegetative surveys#####
+    ########################
 	  print "\nLoading vegetative survey data";$stdout.flush
     veg_survey = DataFrame.new({:city_parcel_plot=>[],:sp_common=>[],:sp_binomial=>[],:sp_native=>[],:location=>[],:cultivation=>[], :notes=>[]})
     veg_transect = DataFrame.new({:city_parcel_plot=>[],:sp_binomial=>[], :transect=>[]})
@@ -71,20 +76,34 @@ if ARGV.length == 2
     print ".";$stdout.flush
     print " - #{veg_transect.nrow} rows of transect and #{veg_survey.nrow} rows of survey data read"
 
-	  #Abundance surveys
+    ########################
+    #Abundance surveys######
+    ########################
 	  print "\nLoading lawn survey data";$stdout.flush
     lawn_survey = DataFrame.new({:city_parcel_plot=>[], :sp_binomial=>[], :sp_common=>[], :location=>[]})
 	  lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Twin Cities Abundance Data.xls", "minnesota")
     print ".";$stdout.flush
     print " - #{lawn_survey.nrow} rows of data read"
     
-    #Database writing
+    ########################
+    #Soil cores#############
+    ########################
+    print "\nLoading soil cores data";$stdout.flush
+    soil_survey = DataFrame.new({:date=>[],:core_id=>[],:city=>[],:date=>[],:case_id=>[],:site_no=>[],:core_no=>[],:plot_no=>[],:depth=>[],:total_L=>[],:notes=>[],:core_sections=>[],:sample_id=>[],:weight=>[],:key_no=>[],:bio_C=>[],:resp_c=>[],:NO2_NO3=>[],:NH4=>[],:bio_N=>[],:min=>[],:nit=>[],:H20=>[],:DEA=>[],:sand_percent=>[],:pH=>[]})
+    soil_survey << read_soil("Data-Parcel-Maps/Soil/Miami_all_data.xlsx")
+    print ".";$stdout.flush
+    print " - #{soil_survey.nrow} rows of data read"
+    
+    ########################
+    #Database Writing#######
+    ########################
     puts "\nProcessing for database..."
     #Clean weird string values out
     iTree = clean_strings(iTree)
     veg_survey = clean_strings(veg_survey)
     veg_transect = clean_strings(veg_transect)
     lawn_survey = clean_strings(lawn_survey)
+    soil_survey = clean_strings(soil_survey)
     #Create taxonomy table
     merger = merge_names([veg_survey, veg_transect, lawn_survey])
     veg_survey, veg_transect, lawn_survey = merger[0]

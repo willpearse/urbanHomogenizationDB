@@ -1,7 +1,7 @@
 # Author::    Will Pearse  (mailto:wdpearse@umn.edu)
 # Date::  3/1/2013
 
-require_relative 'LoadingData.rb'
+require_relative 'LoadingVegData.rb'
 require_relative 'DataFrame.rb'
 require 'sqlite3'
 require 'set'
@@ -22,12 +22,12 @@ def add_to_data_base(data_frame, data_base, table_name, types=nil)
   data_frame.col_names.each{|column, value| elements << column.to_s}
   header = header + "(" + elements.join(", ") + ")"
   commands = []
-  data_frame.each_row do |row|
-    command = header + ' VALUES ("' + row.join('", "') + '")'
-    data_base.execute command
-    commands << command
-  end
-  return commands
+  data_base.transaction do |trans|
+    data_frame.each_row do |row|
+      command = header + ' VALUES ("' + row.join('", "') + '")'
+      trans.execute command
+    end
+   end
 end
 
 #Clean breaking characters from input
