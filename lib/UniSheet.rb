@@ -74,9 +74,9 @@ class UniSheet
   #Change sheet if xls or xlsx file
   def set_sheet(sheet)
     if @file_type == "xls"
-      @excel_sheet = @excel_book.workseet sheet
+      @excel_sheet = @excel_book.worksheet sheet
     elsif @file_type == "xlsx"
-      @xlsx_sheet = @xlsx_book.worksheets[0]
+      @xlsx_sheet = @xlsx_book.worksheets[sheet].extract_data
     else
       raise RuntimeError, "File #{@file_name} is not an xls or xlsx file, so cannot change sheet" 
     end
@@ -115,6 +115,10 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       it "Will load a row correctly" do
         @xls_test[0].must_equal ["Name", "Emailed?", "Confirmed?", "Emailed Re. Payment?","Paid?"]
       end
+      it "Handles multiple sheets" do
+        @xls_test.set_sheet 1
+        assert @xls_test[0] == ["Another sheet"]
+      end
     end
     describe "When loading an XLSX file" do
       it "Will iterate correctly" do
@@ -125,7 +129,13 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       it "Will load a row correctly" do
         @xlsx_test[0].must_equal ["Name", "Emailed?", "Confirmed?", "Emailed Re. Payment?","Paid?"]
       end
-      it "Doesn't just have to go on the filename for file type" do
+      it "Handles multiple sheets" do
+        @xlsx_test.set_sheet 1
+        assert @xlsx_test[0][0] == "Another sheet"
+      end
+    end
+    describe "When loading files" do
+      it "Can ignore file endings if asked" do
         @trick = UniSheet.new("test_files/dataFrameXLSTrick.csv", "xls")
         temp = []
         @xls_test.each {|line| temp << line[0]}
