@@ -20,7 +20,7 @@ end
 # - Miami data distinguish between front and back 'PG'
 def read_veg_survey(file_name, format, name=nil, verbose=true)
   #Helper function to write entries
-  def make_entry(state, parcel, sp_common='', sp_binomial='', location_index='', cultivation='', notes='', sp_native='', perenial_garden_split=false)
+  def make_entry(state, parcel, sp_common='', sp_binomial='', location_index='', cultivation='', notes='', sp_native='', abundance=perenial_garden_split=false)
     begin
       if perenial_garden_split
         location = ['frontLawn', 'backLawn', 'perennialGardenFront', 'perennialGardenBack', 'woodLot', 'annualPlanting', 'reference'][location_index]
@@ -143,30 +143,57 @@ end
 def read_lawn_survey(file_name, format)
   curr_file = UniSheet.new file_name
   #Helper function - assumes particular ordering of front and back lawns
-  def make_entry(state, parcel, sp_binomial='', sp_common='', location_index)
+  def make_entry(state, parcel, sp_binomial, sp_common, location_index, abundance, reference=false)
     begin
-      location = ["F1", "F2", "F3", "B1", "B2", "B3"][location_index]
+      if reference
+        location = location_index
+      else
+        location = ["F1", "F2", "F3", "B1", "B2", "B3"][location_index]
+      end
     rescue Exception => e
       raise RuntimeError, "Bad columns in #{state} - #{parcel}"
     end
-    return DataFrame.new({:city_parcel=>[[state, parcel].join("_")], :sp_binomial=>[sp_binomial], :sp_common=>[sp_common], :location=>[location]})
+    if abundance.is_a? Float or abundance.is_a? Fixnum
+      abundance = abundance.to_i
+    else
+      abundance = -1
+    end
+    return DataFrame.new({:city_parcel=>[[state, parcel].join("_")], :sp_binomial=>[sp_binomial], :sp_common=>[sp_common], :location=>[location], :abundance=>[abundance]})
   end
   
-  output = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[]})
+  output = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[], :abundance=>[]})
   case
   when format.downcase == "minnesota"
     curr_file.each do |line|
       if line[0] and line[0]!= "Site" 
         (4..9).each do |i|
-           if line[i] then output << make_entry("MN", line[0].to_i, line[3], line[2], i-4) end
+           if line[i] then output << make_entry("MN", line[0].to_i, line[3], line[2], i-4, line[i]) end
          end
        end
-     end
+    end
+  when format.downcase == "baltimore"
+    curr_file.each do |line|
+      if line[0] and line[1] and line[0] != "Common name" and line[0] != "Scientific Name"
+        (2..7).each do |i|
+          if line[i] then output << make_entry("BA", curr_file[1][3], line[1], line[0], i-2, line[i]) end
+          end
+        end
+    end
+  when format.downcase == "baltimore reference"
+    curr_file.set_sheet 1
+    curr_file.each do |line|
+      if line[0] and line[0]!="References Site" and line[0]!="City" and line[0]!="Cover categories:" and line[0]!="R (rare, 1 individual), 1(<1%), 2 (1-2%), 3 (3-5%), 4 (6-15%), 5 (16-25%), 6 (26-50%), 7 (51-75%), 8 (76-100%)" and line[0]!="Genus Spp (Scientific Name)"
+        (2..32).each do |i|
+          if (0..32).step(3) === i then break end
+          if line[i] then output << make_entry("BA", [curr_file[0][1], ((i-2)/3+1).to_s].join("_"), line[0], "", (((i-2)%3)+1).to_s, line[i], true) end
+        end
+      end
+    end
    else
      raise RuntimeError, "Unknown file format #{format} for file #{file_name}"
    end
    return output
- end
+end
 
 if File.identical?(__FILE__, $PROGRAM_NAME)
   require 'minitest/spec'
@@ -248,10 +275,24 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
   describe proc {read_lawn_survey} do
     it "Loads Minnesota data correctly" do
       temp = read_lawn_survey("test_files/minnesota_lawn.xls", "minnesota")
-      assert temp.data == {:city_parcel=>["MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7"], :sp_binomial=>["Agrostis tenuis", "Agrostis tenuis", "Agrostis tenuis", "Agrostis tenuis", "Agrostis tenuis", "Amaranthus retroflexus", "Amaranthus retroflexus", "Chrysanthemum spp.", "Festuca rubra", "Festuca rubra", "Festuca rubra", "Festuca rubra", "Festuca rubra", "Festuca rubra"], :sp_common=>["Colonial Bentgrass", "Colonial Bentgrass", "Colonial Bentgrass", "Colonial Bentgrass", "Colonial Bentgrass", "Redroot Pigweed", "Redroot Pigweed", "Chrysanthemum", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue"], :location=>["F1", "F2", "B1", "B2", "B3", "F2", "F3", "B2", "F1", "F2", "F3", "B1", "B2", "B3"]}
+      assert temp.data == {:city_parcel=>["MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7", "MN_7"], :sp_binomial=>["Agrostis tenuis", "Agrostis tenuis", "Agrostis tenuis", "Agrostis tenuis", "Agrostis tenuis", "Amaranthus retroflexus", "Amaranthus retroflexus", "Chrysanthemum spp.", "Festuca rubra", "Festuca rubra", "Festuca rubra", "Festuca rubra", "Festuca rubra", "Festuca rubra"], :sp_common=>["Colonial Bentgrass", "Colonial Bentgrass", "Colonial Bentgrass", "Colonial Bentgrass", "Colonial Bentgrass", "Redroot Pigweed", "Redroot Pigweed", "Chrysanthemum", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue", "Creeping Red Fescue"], :location=>["F1", "F2", "B1", "B2", "B3", "F2", "F3", "B2", "F1", "F2", "F3", "B1", "B2", "B3"], :abundance=>[4, 5, 2, 2, 4, -1, 1, 2, 7, 7, 7, 8, 8, 8]}
       assert temp.nrow == 14
-      assert temp.ncol == 4
-      assert temp.col_names == [:city_parcel, :sp_binomial, :sp_common, :location]
+      assert temp.ncol == 5
+      assert temp.col_names == [:city_parcel, :sp_binomial, :sp_common, :location, :abundance]
+    end
+    it "Loads Baltimore data correctly" do
+      temp = read_lawn_survey("test_files/baltimore_lawn.xlsx", "baltimore")
+      assert temp.data == {:city_parcel=>["BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250", "BA_250"], :sp_binomial=>["Festuca capillata", "Festuca capillata", "Festuca capillata", "Festuca capillata", "Festuca arundinacea", "Festuca arundinacea", "Festuca arundinacea", "Festuca arundinacea", "Festuca arundinacea", "Festuca arundinacea", "Poa pratensis", "Poa pratensis", "Poa pratensis", "Poa pratensis", "Poa pratensis", "Poa pratensis"], :sp_common=>["hair fescue", "hair fescue", "hair fescue", "hair fescue", "tall fescue", "tall fescue", "tall fescue", "tall fescue", "tall fescue", "tall fescue", "Kentucky bluegrass", "Kentucky bluegrass", "Kentucky bluegrass", "Kentucky bluegrass", "Kentucky bluegrass", "Kentucky bluegrass"], :location=>["F1", "F2", "F3", "B3", "F1", "F2", "F3", "B1", "B2", "B3", "F1", "F2", "F3", "B1", "B2", "B3"], :abundance=>[8, 5, 8, 4, 5, 4, 5, 7, 6, 3, 4, 8, 5, 6, 4, 5]}
+      assert temp.ncol == 5
+      assert temp.nrow == 16
+      assert temp.col_names == [:city_parcel, :sp_binomial, :sp_common, :location, :abundance]
+    end
+    it "Loads Baltimore data correctly" do
+      temp = read_lawn_survey("test_files/baltimore_lawn_ref.xlsx", "baltimore reference")
+      assert temp.data == {:city_parcel=>["BA_Leakin_1", "BA_Leakin_8", "BA_Leakin_10", "BA_Leakin_1", "BA_Leakin_1"], :sp_binomial=>["Fagus grandefolia", "Fagus grandefolia", "Fagus grandefolia", "UNKN seedling 434", "UNKN grass 435"], :sp_common=>["", "", "", "", ""], :location=>["2", "1", "3", "2", "2"], :abundance=>[-1, 4, -1, -1, 2]}
+      assert temp.ncol == 5
+      assert temp.nrow == 5
+      assert temp.col_names == [:city_parcel, :sp_binomial, :sp_common, :location, :abundance]
     end
     it "Doesn't care about case in file format" do
       assert read_lawn_survey("test_files/minnesota_lawn.xls", "minnesota") == read_lawn_survey("test_files/minnesota_lawn.xls", "mInNeSoTa")

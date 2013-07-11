@@ -11,6 +11,7 @@ puts "\nUrban Homogenization of America - data cleaning and database generation 
 puts "2013-4-19 - Will Pearse (wdpearse@umn.edu)"
 puts "Not recommended for use over a server. Watch for newly-created empty folders"
 puts " - these may indicate that XLSX files are being multiply loaded"
+puts "*** Does not load all Balitmore data"
 puts "Each full stop = one city's data loaded"
 if ARGV.length == 2
   if File.exist? ARGV[0]
@@ -87,8 +88,20 @@ if ARGV.length == 2
     #Abundance surveys######
     ########################
     print "\nLoading lawn survey data";$stdout.flush
-    lawn_survey = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[]})
+    lawn_survey = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[], :abundance=>[]})
     lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Twin Cities Abundance Data.xls", "minnesota")
+    print ".";$stdout.flush
+    Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Baltimore/lawn plant cover data" do |file|
+      #Be careful of the diversity data that was accidentally placed in this folder...
+      if File.file? file and file!=".DS_Store" and !file.include?("DIV")
+        #Reference sites have a different data format
+        if file.include?("Reference")
+          lawn_survey << read_lawn_survey(file, "baltimore reference")
+        else
+          lawn_survey << read_lawn_survey(file, "baltimore")
+        end
+      end
+    end
     print ".";$stdout.flush
     print " - #{lawn_survey.nrow} rows of data read"
     
@@ -133,7 +146,7 @@ if ARGV.length == 2
     add_to_data_base(veg_survey, db, "VegSurvey", nil)
     db.execute "CREATE TABLE VegTransect (cpp_index TEXT, sp_index TEXT, transect TEXT)"
     add_to_data_base(veg_transect, db, "VegTransect", nil)  
-    db.execute "CREATE TABLE LawnSurvey (cpp_index TEXT, sp_index TEXT, sp_common TEXT, location TEXT)"
+    db.execute "CREATE TABLE LawnSurvey (cpp_index TEXT, sp_index TEXT, sp_common TEXT, location TEXT, abundance INT)"
     add_to_data_base(lawn_survey, db, "LawnSurvey", nil)
     db.execute "CREATE TABLE Taxonomy (sp_binomial TEXT, sp_index TEXT)"
     add_to_data_base(taxonomy, db, "Taxonomy", nil)
