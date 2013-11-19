@@ -75,12 +75,14 @@ if ARGV.length == 2
     veg_transect << read_veg_transect("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Lost Valley Prairie Diversity data.xlsx", "minnesota", "MN", "LostValley")
     print ".";$stdout.flush
     #Miami
-    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Species list-Miami-1-8-13.xlsx", "miami")
+    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Vascular Diversity by ID code 2-21-13.xlsx", "miami")
     print ".";$stdout.flush
     #Boston
-    Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Baltimore" do |file|
-      veg_survey << read_veg_survey(file, "boston") if File.file? file and file!=".DS_Store"
-    end
+    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Boston/Boston_specieslist.xls", "boston")
+    veg_survey << read_veg_survey("/home/will/Dropbox/homogenization/data/CFANSClone/Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Boston/Boston_specieslist.xls", "boston")
+    print ".";$stdout.flush
+    #Phoenix
+    veg_survey << read_veg_survey("/home/will/Dropbox/homogenization/data/CFANSClone/Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Phoenix/SP Diversity 30Sep.xlsx", "phoenix")
     print ".";$stdout.flush
     print " - #{veg_transect.nrow} rows of transect and #{veg_survey.nrow} rows of survey data read"
 

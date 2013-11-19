@@ -1,6 +1,6 @@
 #Setup; load from a (recent) dump of the taxonomy table
 require(Taxonstand)
-species <- read.csv("/home/will/Dropbox/homogenization/database/species.txt")
+species <- read.csv("/home/will/Dropbox/homogenization/database/species.csv")
 db.names <- species[,1]
 
 #Basic pre-processing to remove sp., fix known fuck-ups, etc.
@@ -41,6 +41,9 @@ genera.only <- setdiff(genera.only, lookup$gen.search[lookup$final.cut==TRUE])
 
 #Do the search
 plant.list <- with(lookup[lookup$final.cut,], TPL(genus=gen.search, species=sp.search, corr=TRUE, infra=FALSE))
+
+
+
 save.image("/home/will/Dropbox/homogenization/phylogeny/names.RData")
 
 #Fill in the results of the search
@@ -130,4 +133,4 @@ lookup <- fix.entry(lookup, "vriesea sp._", "vriesea")
 lookup <- fix.entry(lookup, "zinia sp.", "zinia")
 
 #Write it out!
-write.csv(lookup, "/home/will/Dropbox/homogenization/database/taxonomy.csv")
+write.csv(lookup, "/home/will/Dropbox/homogenization/database/taxonomy.csv", row.names=FALSE, col.names=FALSE, quote=FALSE)

@@ -41,24 +41,43 @@ def read_veg_survey(file_name, format, name=nil, verbose=true)
       entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["reference"],:cultivation=>[cultivation],:notes=>[notes]}
     end
     if front and front.downcase=="y"
-      location_code.split(",").each do |code|
-        if code == "l" or code.include? 'l-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontLawn"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code == "c" or code.include? 'c-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontCultivated"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code.downcase == "v" or code.include? 'v-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontVegetable"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code.downcase == "o" or code.include? 'o-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontUnmanaged"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code.downcase == "w" or code.include? 'w-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontUnmanaged"],:cultivation=>[cultivation],:notes=>[notes]} end
+      if location_code
+        location_code.split(",").each do |code|
+          if code == "l" or code.include? 'l-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontLawn"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code == "c" or code.include? 'c-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontCultivated"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code.downcase == "v" or code.include? 'v-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontVegetable"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code.downcase == "o" or code.include? 'o-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontUnmanaged"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code.downcase == "w" or code.include? 'w-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontWoodlot"],:cultivation=>[cultivation],:notes=>[notes]} end
+        end
+      else
+        entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontUnknown"],:cultivation=>[cultivation],:notes=>[notes]}
       end
     end
     if back and back.downcase=="y"
-      location_code.split(",").each do |code|
-        if code == "l" or code.include? 'l-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backLawn"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code == "c" or code.include? 'c-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backCultivated"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code.downcase == "v" or code.include? 'v-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backVegetable"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code.downcase == "o" or code.include? 'o-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["frontUnmanaged"],:cultivation=>[cultivation],:notes=>[notes]} end
-        if code.downcase == "w" or code.include? 'w-' then entries << {:city_parcel=>["BOS_"+parcel],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backWoodlot"],:cultivation=>[cultivation],:notes=>[notes]} end
+      if location_code
+        location_code.split(",").each do |code|
+          if code == "l" or code.include? 'l-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backLawn"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code == "c" or code.include? 'c-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backCultivated"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code.downcase == "v" or code.include? 'v-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backVegetable"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code.downcase == "o" or code.include? 'o-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backUnmanaged"],:cultivation=>[cultivation],:notes=>[notes]} end
+          if code.downcase == "w" or code.include? 'w-' then entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backWoodlot"],:cultivation=>[cultivation],:notes=>[notes]} end
+        end
+      else
+        entries << {:city_parcel=>["BOS_"+parcel.to_s],:sp_common=>[''],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>["backUnknown"],:cultivation=>[cultivation],:notes=>[notes]}
       end
     end
     return entries
+  end
+  #Yet another wrapper for Phoenix data 
+  def make_phoenix_entry(parcel, sp_common, sp_binomial, location, cultivation, sp_native, date)
+    location_lookup = {"Annual Planting"=>"annualPlant", "Annual Plantings"=>"annualPlant", "back lawn"=>"backLawn", "Back Lawn"=>"backLawn", "Back Perennial Garden"=>"perennialGardenBack", "front lawn"=>"frontLawn", "Front Lawn"=>"frontLawn", "Front Perennial Garden"=>"perennialGardenFront", "nothing"=>"reference", "perennial garden"=>"perennialGarden", "POTTED"=>"pot", "T1"=>"reference", "T2"=>"reference", "T3"=>"reference", "T4"=>"reference", "T5"=>"reference", "T6"=>"reference", "T7"=>"reference", "T8"=>"reference", "Unmanaged"=>"unmanaged", "Vegetable Garden"=>"vegetableGarden", "Xeriscape"=>"xeriscape"}
+    begin
+      location = location_lookup[location]
+    rescue
+      raise RuntimeError, "Bad location entry #{location} in Phoenix site #{parcel}"
+    end
+    city_parcel = "AZ_#{parcel}"
+    return DataFrame.new({:city_parcel=>[city_parcel],:sp_common=>[sp_common],:sp_binomial=>[sp_binomial],:sp_native=>[sp_native],:location=>[location],:cultivation=>[cultivation], :notes=>["Date:#{date}"]})
   end
   
   curr_file = UniSheet.new file_name
@@ -113,6 +132,13 @@ def read_veg_survey(file_name, format, name=nil, verbose=true)
         output << make_boston_entry(line[2], line[5], line[6], line[7], line[9], line[8], line[11], line[12])
       end
     end
+  when format.downcase == "phoenix"
+    curr_file.set_sheet 1
+    curr_file.each do |line|
+      if line[0] and line[0] != "Case ID"
+        output << make_phoenix_entry(line[0], line[2], line[3], line[6], line[7], line[5], line[1])
+      end
+    end
   else
     raise RuntimeError, "Unknown file format #{format} for file #{file_name}"
   end
@@ -129,7 +155,7 @@ def read_veg_transect(file_name, format, state, parcel)
       if line[5]
         (1..4).each do |i|
           #Transect is simply i because we want transect 1 to be transect 1, not transect 0
-          if line[i] then output << {:city_parcel=>[[state, parcel].join("_")], :sp_binomial=>[line[0]], :transect=>[i.to_i]} end
+          if line[i] then output << {:city_parcel=>[[state, parcel, i.to_s].join("_")], :sp_binomial=>[line[0]], :transect=>[i.to_i]} end
         end
       end
     end
@@ -242,8 +268,15 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       assert temp.col_names == [:city_parcel, :sp_common, :sp_binomial, :sp_native, :location, :cultivation, :notes]
     end
     it "Loads Boston urban data correctly" do
-      temp = read_veg_survey("test_files/boston_veg.csv", "boston")
-      assert temp.data == {:city_parcel=>["BOS_314", "BOS_5740", "BOS_11129"], :sp_common=>["", "", ""], :sp_binomial=>["(Betulaceae)", "(Cyperaceae)", "(Nymphaeaceae)"], :sp_native=>["U", "U", nil], :location=>["frontCultivated", "backLawn", "backCultivated"], :cultivation=>["5", "5", "1"], :notes=>["seedling - chestnut?", "carex?", nil]}
+      temp = read_veg_survey("test_files/boston_veg.xlsx", "boston")
+      assert temp.data == {:city_parcel=>["BOS_314", "BOS_5740", "BOS_11129"], :sp_common=>["", "", ""], :sp_binomial=>["(Betulaceae)", "(Cyperaceae)", "(Nymphaeaceae)"], :sp_native=>["U", "U", nil], :location=>["frontCultivated", "backLawn", "backUnknown"], :cultivation=>[5, 5, 1], :notes=>["seedling - chestnut?", "carex?", nil]}
+      assert temp.nrow == 3
+      assert temp.ncol == 7
+      assert temp.col_names == [:city_parcel, :sp_common, :sp_binomial, :sp_native, :location, :cultivation, :notes]
+    end
+    it "Loads Phoenix urban data correctly" do
+      temp = read_veg_survey("test_files/phoenix.xlsx", "phoenix")
+      assert temp.data == {:city_parcel=>["AZ_159", "AZ_159", "AZ_159"], :sp_common=>["Agave 'Shark Skin'", "Asparagus Fern", "Rescuegrass"], :sp_binomial=>["Agave ferdinandi-regis x scabra", "Asparagus densiflorus", "Bromus catharticus"], :sp_native=>[nil, "South Africa", "South America"], :location=>["xeriscape", "xeriscape", "frontLawn"], :cultivation=>["C-1", "C-1", "S-5"], :notes=>["Date:41363", "Date:41363", "Date:41363"]}
       assert temp.nrow == 3
       assert temp.ncol == 7
       assert temp.col_names == [:city_parcel, :sp_common, :sp_binomial, :sp_native, :location, :cultivation, :notes]
@@ -259,7 +292,7 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
   describe proc {read_veg_transect} do
     it "Loads Minnesota data correctly" do
       temp = read_veg_transect("test_files/minnesota_rural.xlsx", "minnesota", "MN", "StCroix")
-      assert temp.data == {:city_parcel=>["MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix"], :sp_binomial=>["Acer negundo", "Achillea millefolium", "Ageratina altissima", "Amaranthus retroflexus", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata"], :transect=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]}
+      assert temp.data == {:city_parcel=>["MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4"], :sp_binomial=>["Acer negundo", "Achillea millefolium", "Ageratina altissima", "Amaranthus retroflexus", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata"], :transect=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]}
       assert temp.nrow == 16
       assert temp.ncol == 3
       assert temp.col_names == [:city_parcel, :sp_binomial, :transect]
@@ -287,7 +320,7 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       assert temp.nrow == 16
       assert temp.col_names == [:city_parcel, :sp_binomial, :sp_common, :location, :abundance]
     end
-    it "Loads Baltimore data correctly" do
+    it "Loads Baltimore reference data correctly" do
       temp = read_lawn_survey("test_files/baltimore_lawn_ref.xlsx", "baltimore reference")
       assert temp.data == {:city_parcel=>["BA_Leakin_1", "BA_Leakin_8", "BA_Leakin_10", "BA_Leakin_1", "BA_Leakin_1"], :sp_binomial=>["Fagus grandefolia", "Fagus grandefolia", "Fagus grandefolia", "UNKN seedling 434", "UNKN grass 435"], :sp_common=>["", "", "", "", ""], :location=>["2", "1", "3", "2", "2"], :abundance=>[-1, 4, -1, -1, 2]}
       assert temp.ncol == 5

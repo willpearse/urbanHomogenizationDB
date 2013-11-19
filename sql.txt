@@ -1,11 +1,11 @@
 -- pulling out some basic 'what species are where' data
 -- preamble
-.output pres_abs.csv
 .header ON
-.format csv
+.mode csv
 
---queries
+--Dumb species lists for everything
 -- ! Can't do iTree because there are no binomials in that dataset!...!
+.output pres_abs.csv
 SELECT sp_binomial, city_parcel
 FROM VegSurvey INNER JOIN Taxonomy ON VegSurvey.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on VegSurvey.cpp_index=City_Parcel.cpp_index;
@@ -15,3 +15,7 @@ FROM LawnSurvey INNER JOIN Taxonomy ON LawnSurvey.sp_index=Taxonomy.sp_index
 SELECT sp_binomial, city_parcel
 FROM VegTransect INNER JOIN Taxonomy ON VegTransect.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on VegTransect.cpp_index=VegTransect.cpp_index;
+
+--Getting total species list out
+.output species.csv
+SELECT * from Taxonomy;
