@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 #Example:
-#./make_database.rb thirdPass.db /Users/will/Dropbox/homogenization/data/CFANSClone/
+#./make_database.rb thirdPass.db /home/will/Dropbox/homogenization/data/CFANSClone/
 
 require_relative 'lib/LoadingVegData.rb'
 require_relative 'lib/LoadingSoilData.rb'
+require_relative 'lib/LoadingSocialData.rb'
 require_relative 'lib/ProcessingData.rb'
 
 #MAIN
@@ -12,6 +13,8 @@ puts "2013-4-19 - Will Pearse (wdpearse@umn.edu)"
 puts "Not recommended for use over a server. Watch for newly-created empty folders"
 puts " - these may indicate that XLSX files are being multiply loaded"
 puts "*** Does not load all Balitmore data"
+puts "*** Converted social data to CSV because of XLSX loading problem (corrupt file?)"
+puts "*** Currently don't know the name of cities 2 and 5; confirm (check with lookup)"
 puts "Each full stop = one city's data loaded"
 if ARGV.length == 2
   if File.exist? ARGV[0]
@@ -75,7 +78,7 @@ if ARGV.length == 2
     veg_transect << read_veg_transect("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Lost Valley Prairie Diversity data.xlsx", "minnesota", "MN", "LostValley")
     print ".";$stdout.flush
     #Miami
-    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Vascular Diversity by ID code 2-21-13.xlsx", "miami")
+    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Miami Master Species List_FIU Query.xlsx", "miami")
     print ".";$stdout.flush
     #Boston
     veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Boston/Boston_specieslist.xls", "boston")
@@ -116,29 +119,37 @@ if ARGV.length == 2
     print ".";$stdout.flush
     soil_survey << read_soil("Data-Parcel-Maps/Soil/MSB_Soils_data_compiled.xlsx", "MN", 1)
     print ".";$stdout.flush
-    soil_survey << read_soil("Data-Parcel-Maps/Soil/MSB_Soils_data_compiled.xlsx", "MN", 2)
+    soil_survey << read_soil("Data-Parcel-Maps/Soil/MSB_Soils_data_compiled.xlsx", "BOS", 2)
     print ".";$stdout.flush
-    soil_survey << read_soil("Data-Parcel-Maps/Soil/MSB_Soils_data_compiled.xlsx", "MN", 3)
+    soil_survey << read_soil("Data-Parcel-Maps/Soil/MSB_Soils_data_compiled.xlsx", "BA", 3)
     print ".";$stdout.flush
     print " - #{soil_survey.nrow} rows of data read"
     
     ########################
+    #Phone surveys##########
+    ########################
+    print "\nLoading telephone survey data";$stdout.flush
+    phone_survey = read_social("Data-Parcel-Maps/Social/Full_Data_withComposite_Scale_02-17-14.csv")
+    print "......";$stdout.flush
+    
+    ########################
     #Database Writing#######
     ########################
-    puts "\nProcessing for database..."
+    puts "\nProcessing and simplifying database..."
     #Clean weird string values out
     iTree = clean_strings(iTree)
     veg_survey = clean_strings(veg_survey)
     veg_transect = clean_strings(veg_transect)
     lawn_survey = clean_strings(lawn_survey)
     soil_survey = clean_strings(soil_survey)
+    phone_survey = clean_strings(phone_survey)
     #Create taxonomy table
     merger = merge_names([veg_survey, veg_transect, lawn_survey])
     veg_survey, veg_transect, lawn_survey = merger[0]
     taxonomy = merger[1]
     #Create city_parcel table
-    merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey])
-    iTree, veg_survey, veg_transect, lawn_survey = merger[0]
+    merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey, phone_survey])
+    iTree, veg_survey, veg_transect, lawn_survey, phone_survey = merger[0]
     city_parcel = merger[1]
     
     puts "Writing database..."
@@ -150,13 +161,14 @@ if ARGV.length == 2
     add_to_data_base(veg_transect, db, "VegTransect", nil)  
     db.execute "CREATE TABLE LawnSurvey (cpp_index TEXT, sp_index TEXT, sp_common TEXT, location TEXT, abundance INT)"
     add_to_data_base(lawn_survey, db, "LawnSurvey", nil)
+    db.execute "CREATE TABLE PhoneSurvey (cpp_index TEXT, income TEXT, landuse TEXT, year_built TEXT, yard_type TEXT, income_survey TEXT, income_combined TEXT, density_level TEXT, income_level TEXT, north_south TEXT, east_west TEXT, floral_biodiversity TEXT, local_nature_provisioning TEXT, supporting_environmental_services TEXT, local_cultural_value TEXT, neat_aesthetic TEXT, appearance TEXT, low_maintenance TEXT, low_cost TEXT, veg_private TEXT, veg_food TEXT, veg_cool TEXT, veg_condit TEXT, veg_common TEXT, veg_legac TEXT, yrd_weeds TEXT, yrd_looks TEXT, yrd_enjoy TEXT, yrd_social TEXT, yrd_common TEXT, yrd_air TEXT, yrd_climate TEXT, yrd_green TEXT, veg_aest TEXT, veg_ease TEXT, veg_wldlf TEXT, veg_nativ TEXT, veg_neat TEXT, veg_cost TEXT, veg_kids TEXT, veg_pets TEXT, veg_hoa TEXT, yrd_divers TEXT, yrd_learn TEXT, yrd_beaut TEXT, yrd_values TEXT, yrd_cost TEXT, yrd_tradit TEXT, yrd_drain TEXT, yrd_ease TEXT, yrd_pollut TEXT, yrd_neat TEXT, yrd_soil TEXT, yrd_kids TEXT, yrd_pets TEXT, yrd_flwrs TEXT)"   
+    add_to_data_base(phone_survey, db, "PhoneSurvey", nil)
     db.execute "CREATE TABLE Taxonomy (sp_binomial TEXT, sp_index TEXT)"
     add_to_data_base(taxonomy, db, "Taxonomy", nil)
     db.execute "CREATE TABLE City_Parcel (city_parcel TEXT, cpp_index TEXT)"
     add_to_data_base(city_parcel, db, "City_Parcel", nil)
-    
-    
-    
+
+
     puts "\nFinished!\n"
   end
 else

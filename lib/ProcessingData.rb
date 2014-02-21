@@ -100,7 +100,7 @@ def merge_cpp(data_array)
       if plot then cpp << plot end
     end
   end
-  #Convert into an array, and make replacement sp_binomial entries
+  #Convert into an array, and make replacement cpp_index entries
   cpp = cpp.to_a
   cpp.sort!
   data_array.each_with_index do |data, i|
