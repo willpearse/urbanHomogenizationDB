@@ -1,0 +1,23 @@
+1-Wire/iButton Part Number: 123456
+1-Wire/iButton Registration Number: 123456
+Mission in Progress?  true
+SUTA Mission?  false
+Waiting for Temperature Alarm?  false
+Sample Rate:  Every 1800 second(s)
+Mission Start Time:  Sat Apr 27 22:08:01 CDT 2013
+Mission Sample Count:  1950
+Roll Over Enabled?  true(no rollover occurred)
+First Sample Timestamp:  Sat Apr 27 22:08:01 CDT 2013
+Total Mission Samples:  1950
+Total Device Samples:  24602
+Temperature Logging:  0.5 C
+Temperature High Alarm:  disabled
+Temperature Low Alarm:  disabled
+Data Logging:  0.6 %RH
+Data High Alarm:  disabled
+Data Low Alarm:  disabled
+
+Date/Time,Unit,Value
+4/27/13 10:08:01 PM,%RH,53.607
+4/27/13 10:38:01 PM,%RH,55.981
+4/27/13 11:08:01 PM,%RH,57.159

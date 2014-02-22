@@ -68,12 +68,18 @@ class DataFrame
   def <<(binder)
     if binder.is_a? DataFrame
       unless self.data.keys.sort == binder.data.keys.sort then raise RuntimeError, "Cannot merge DataFrames with non-matching columns" end
-      binder.data.each {|key, value| @data[key] += value}
+      binder.data.each do |key, value|
+        @data[key] << value
+        @data[key].flatten!
+      end
       @nrow += HashHelpers.equal_length(binder.data)
     elsif binder.is_a? Hash
       unless self.data.keys.sort == binder.keys.sort then raise RuntimeError, "Cannot merge DataFrame and Hash with non-matching elements" end
       unless HashHelpers.equal_length(binder) then raise RuntimeError, "Cannot merge DataFrame with non-equal-length Hash" end
-      binder.each {|key, value| @data[key] += value}
+      binder.each do |key, value|
+        @data[key] << value
+        @data[key].flatten!
+      end
       @nrow += HashHelpers.equal_length(binder)
     else
       raise RuntimeError, "Can only merge DataFrame with a DataFrame or Hash"
@@ -137,6 +143,17 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       second << {:a=>[1,2,3], :b=>["a", "v", "a"]}
       assert second.data == {:a=>[1, 2, 3, 1, 2, 3], :b=>["a", "v", "a", "a", "v", "a"]}
       assert second.nrow == 6
+    end
+    it "Appends single elements from a DataFrame or Hash" do
+      first = DataFrame.new({:a=>[1,2,3], :b=>["a", "v", "a"]})
+      second = DataFrame.new({:a=>[4], :b=>["b"]})
+      first << second
+      assert first.data == {:a=>[1, 2, 3, 4], :b=>["a", "v", "a", "b"]}
+      assert first.nrow == 4
+      third = DataFrame.new({:a=>[1,2,3], :b=>["a", "v", "a"]})
+      fourth = {:a=>[4], :b=>["b"]}
+      third << fourth
+      assert first.data == third.data
     end
     it "Allows access to columns" do
       first = DataFrame.new({:a=>[1,2,3], :b=>["a", "v", "a"]})

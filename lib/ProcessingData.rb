@@ -5,7 +5,6 @@ require_relative 'LoadingVegData.rb'
 require_relative 'DataFrame.rb'
 require 'sqlite3'
 require 'set'
-
 #Import a given hash into a given table in a data_base
 def add_to_data_base(data_frame, data_base, table_name, types=nil)
   #Assertion checks
@@ -160,8 +159,8 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       assert merger[0][0].data == {:sp_common=>["", "", "", "", "", "", ""], :sp_binomial=>["Bidens_alba", "Bidens_alba", "Youngia_japonica", "Youngia_japonica", "Phyla_nodiflora", "Stenotaphrum_secundatum", "Stenotaphrum_secundatum"], :sp_native=>[true, true, true, true, true, true, true], :location=>["frontLawn", "backLawn", "frontLawn", "backLawn", "frontLawn", "frontLawn", "backLawn"], :cultivation=>["S-5", "S-5", "S-5", "S-5", "S-5", "S-5", "S-5"], :notes=>["", "", "", "", "", "", ""], :cpp_index=>[0, 0, 0, 0, 0, 0, 0]}
       assert merger[0][1].nrow == 16
       assert merger[0][1].ncol == 3
-      assert merger[0][1].data == {:sp_binomial=>["Acer negundo", "Achillea millefolium", "Ageratina altissima", "Amaranthus retroflexus", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata"], :transect=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4], :cpp_index=>[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
-      assert merger[1].data == {:city_parcel=>["FL_827", "MN_StCroix"], :cpp_index=>[0, 1]}
+      assert merger[0][1].data == {:sp_binomial=>["Acer negundo", "Achillea millefolium", "Ageratina altissima", "Amaranthus retroflexus", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Ambrosia coronopifolia", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amorpha canescens", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata", "Amphicarpaea bracteata"], :transect=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4], :cpp_index=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]}
+      assert merger[1].data == {:city_parcel=>["FL_827", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4"], :cpp_index=>[0, 1, 2, 3, 4]}
     end
     it "Creates copies" do
       data = read_veg_survey("test_files/miami.xlsx", "miami")
