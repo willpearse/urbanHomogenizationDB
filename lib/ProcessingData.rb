@@ -132,12 +132,11 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
   
   describe proc {merge_names} do
     it "Merges names correctly" do
-
       data = read_veg_survey("test_files/miami.xlsx", "miami")
       data2 = read_veg_transect("test_files/minnesota_rural.xlsx", "minnesota", "MN", "StCroix")
       merger = merge_names([data, data2])
       assert merger[0][0].data == {:city_parcel=>["FL_827", "FL_827", "FL_827", "FL_827", "FL_827", "FL_827", "FL_827"], :sp_common=>["", "", "", "", "", "", ""], :sp_native=>[true, true, true, true, true, true, true], :location=>["frontLawn", "backLawn", "frontLawn", "backLawn", "frontLawn", "frontLawn", "backLawn"], :cultivation=>["S-5", "S-5", "S-5", "S-5", "S-5", "S-5", "S-5"], :notes=>["", "", "", "", "", "", ""], :sp_index=>[7, 7, 10, 10, 8, 9, 9]}
-      assert merger[0][1].data == {:city_parcel=>["MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix", "MN_StCroix"], :transect=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4], :sp_index=>[0, 1, 2, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]}
+      assert merger[0][1].data == {:city_parcel=>["MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4", "MN_StCroix_1", "MN_StCroix_2", "MN_StCroix_3", "MN_StCroix_4"], :transect=>[1, 1, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4], :sp_index=>[0, 1, 2, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]}
       assert merger[1].data == {:sp_binomial=>["acer negundo", "achillea millefolium", "ageratina altissima", "amaranthus retroflexus", "ambrosia coronopifolia", "amorpha canescens", "amphicarpaea bracteata", "bidens_alba", "phyla_nodiflora", "stenotaphrum_secundatum", "youngia_japonica"], :sp_index=>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
     end
     it "Creates copies" do

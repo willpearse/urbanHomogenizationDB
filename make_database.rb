@@ -53,7 +53,7 @@ if ARGV.length == 2
     Dir.foreach("iButton Data/Los Angeles/Dec2013Jan2014") {|file| if File.file? "iButton Data/Los Angeles/Dec2013Jan2014/"+file then temp << read_iButton("iButton Data/Los Angeles/Dec2013Jan2014/"+file, "LA") end}
     print ".";$stdout.flush
     #Miami
-    Dir.foreach("iButton Data/Miami/July") {|file| if File.file? "iButton Data/Miami/July/"+file then temp << read_iButton("iButton Data/Miami/July/"+file, "FK") end}
+    Dir.foreach("iButton Data/Miami/July") {|file| if File.file? "iButton Data/Miami/July/"+file then temp << read_iButton("iButton Data/Miami/July/"+file, "FL") end}
     Dir.foreach("iButton Data/Miami/October") {|file| if File.file? "iButton Data/Miami/October/"+file then temp << read_iButton("iButton Data/Miami/October/"+file, "FL") end}
     print ".";$stdout.flush
     #Minnesota
@@ -93,7 +93,7 @@ if ARGV.length == 2
     end
     print ".";$stdout.flush
     print " - #{iTree.nrow} rows of data read"
-    
+
     ########################
     #Vegetative surveys#####
     ########################
@@ -168,13 +168,7 @@ if ARGV.length == 2
     ########################
     print "\nLoading telephone survey data";$stdout.flush
     phone_survey = read_social("Data-Parcel-Maps/Social/Full_Data_withComposite_Scale_02-17-14.csv")
-    print "......";$stdout.flush
-
-    
-    
-    
-    print ".";$stdout.flush
-
+    print "......";$stdout.flush  
     
     ########################
     #Database Writing#######
@@ -190,12 +184,13 @@ if ARGV.length == 2
     micro_temp = clean_strings(micro_temp)
     micro_humidity = clean_strings(micro_humidity)
     #Create taxonomy table
-    merger = merge_names([veg_survey, veg_transect, lawn_survey])
-    veg_survey, veg_transect, lawn_survey = merger[0]
+    merger = merge_names([veg_survey, veg_transect])#, lawn_survey])
+    veg_survey, veg_transect = merger[0]
     taxonomy = merger[1]
     #Create city_parcel table
+    merger = merge_cpp([veg_survey, veg_transect])
     merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey, phone_survey, micro_temp, micro_humidity])
-    iTree, veg_survey, veg_transect, lawn_survey, phone_survey, micro_temp, micro_humidity = merger[0]
+    veg_survey, veg_transect = merger[0]
     city_parcel = merger[1]
     
     puts "Writing database..."
