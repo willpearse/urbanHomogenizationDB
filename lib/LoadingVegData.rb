@@ -5,13 +5,42 @@ require_relative 'UniSheet.rb'
 require_relative 'DataFrame.rb'
 
 #Load iTree data
-def read_iTree(file_name)
-  output = DataFrame.new({:city_parcel=>[],:tree_no=>[],:sp_common=>[],:dbh=>[],:height=>[],:ground_area=>[],:condition=>[],:leaf_area=>[],:leaf_biomass=>[],:leaf_area_index=>[],:carbon_storage=>[],:gross_carbon_seq=>[],:money_value=>[],:street=>[],:native=>[]})
+def read_iTree(file_name, format="default")
+  output = DataFrame.new({:city_parcel=>[],:tree_no=>[],:sp_binomial=>[],:sp_common=>[],:dbh=>[],:height=>[],:ground_area=>[],:condition=>[],:leaf_area=>[],:leaf_biomass=>[],:leaf_area_index=>[],:carbon_storage=>[],:gross_carbon_seq=>[],:money_value=>[],:street=>[],:native=>[]})
   curr_file = UniSheet.new file_name
-  curr_file.each do |line|
-    if line[0] and line[0] != "City ID"
-      output << {:city_parcel=>[[line[0], line[1]].join("_")],:tree_no=>[line[5]],:sp_common=>[line[6]],:dbh=>[line[7]],:height=>[line[8]],:ground_area=>[line[9]],:condition=>[line[10]],:leaf_area=>[line[11]],:leaf_biomass=>[line[12]],:leaf_area_index=>[line[13]],:carbon_storage=>[line[14]],:gross_carbon_seq=>[line[15]],:money_value=>[line[16]],:street=>[line[17]],:native=>[line[18]]}
+  case
+  when format.downcase == "default"
+    curr_file.each do |line|
+      if line[0] and line[0] != "City ID"
+        output << {:city_parcel=>[[line[0], line[1]].join("_")],:tree_no=>[line[5]],:sp_binomial=>[""],:sp_common=>[line[6]],:dbh=>[line[7]],:height=>[line[8]],:ground_area=>[line[9]],:condition=>[line[10]],:leaf_area=>[line[11]],:leaf_biomass=>[line[12]],:leaf_area_index=>[line[13]],:carbon_storage=>[line[14]],:gross_carbon_seq=>[line[15]],:money_value=>[line[16]],:street=>[line[17]],:native=>[line[18]]}
+      end
+    end    
+  when format.downcase == "saltlake"
+    curr_file.set_sheet 3
+    curr_file.each do |line|
+      if line[0] and line[0] != "ID Code"
+        (5..16).each do |i|
+          unless line[i]==0 then output << {:city_parcel=>[["SL", line[0]].join("_")],:tree_no=>[""],:sp_binomial=>[""],:sp_common=>[line[2]],:dbh=>[line[i]],:height=>["4"],:ground_area=>[""],:condition=>[""],:leaf_area=>[""],:leaf_biomass=>[""],:leaf_area_index=>[""],:carbon_storage=>[""],:gross_carbon_seq=>[""],:money_value=>[""],:street=>[""],:native=>[""]} end
+        end
+      end
     end
+  when format.downcase == "la"
+    curr_file.each do |line|
+      if line[0] and line[0] != "City ID"
+        output << {:city_parcel=>[[line[0], line[1]].join("_")],:tree_no=>[line[3]],:sp_binomial=>[line[4]],:sp_common=>[""],:dbh=>[line[5]],:height=>[line[6]],:ground_area=>[line[7]],:condition=>[line[8]],:leaf_area=>[line[9]],:leaf_biomass=>[line[10]],:leaf_area_index=>[line[11]],:carbon_storage=>[line[12]],:gross_carbon_seq=>[line[13]],:money_value=>[line[14]],:street=>[line[15]],:native=>[line[16]]}
+      end
+    end
+  when
+    format.downcase == "phoenix"
+    curr_file.each do |line|
+      if line[0] and line[0] != "Date"
+        (7..12).each do |i|
+          unless line[i]=="" or line[i]==nil then output << {:city_parcel=>[["PX", line[1]].join("_")],:tree_no=>[""],:sp_binomial=>[line[3]],:sp_common=>[line[2]],:dbh=>[line[i]],:height=>[line[13]],:ground_area=>[""],:condition=>[""],:leaf_area=>[""],:leaf_biomass=>[""],:leaf_area_index=>[""],:carbon_storage=>[""],:gross_carbon_seq=>[""],:money_value=>[""],:street=>[""],:native=>[""]} end
+        end
+      end
+    end
+  else
+    raise RuntimeError, "Unknown file format #{format} for file #{file_name}"
   end
   return output
 end
@@ -132,11 +161,23 @@ def read_veg_survey(file_name, format, name=nil, verbose=true)
         output << make_boston_entry(line[2], line[5], line[6], line[7], line[9], line[8], line[11], line[12])
       end
     end
+    
   when format.downcase == "phoenix"
     curr_file.set_sheet 1
     curr_file.each do |line|
       if line[0] and line[0] != "Case ID"
         output << make_phoenix_entry(line[0], line[2], line[3], line[6], line[7], line[5], line[1])
+      end
+    end
+    
+  when format.downcase == "saltlake"
+    #Species survey
+    curr_file.set_sheet 1
+    curr_file.each do |line|
+      if line[0] and line[0] != "ID Code"
+        (5..9).each do |i|
+          if line[i] then output << make_entry("SL", line[0], line[3], line[4], i-5, line[i]) end
+        end
       end
     end
   else
@@ -145,8 +186,10 @@ def read_veg_survey(file_name, format, name=nil, verbose=true)
   return output
 end
 
+
+    
 #Transect surveys (of non-urban areas)
-def read_veg_transect(file_name, format, state, parcel)
+def read_veg_transect(file_name, format, state, parcel="ERROR")
   curr_file = UniSheet.new file_name
   output = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :transect=>[]})
   case
@@ -159,6 +202,15 @@ def read_veg_transect(file_name, format, state, parcel)
         end
       end
     end
+  when format.downcase == "saltlake"
+    curr_file.each do |line|
+      if line[0] and line[0] != "Site"
+        (5..12).each do |i|
+          #Note I'm still trying to keep transect 0 transect 1 in the database...
+          if line[i]!="0" then output << {:city_parcel=>[[state, line[0], line[0].to_s].join("_")], :sp_binomial=>[[line[3], line[4]].join("+")], :transect=>[(i+1).to_i]} end
+        end
+      end
+    end
   else
     raise RuntimeError, "Unknown file format #{format} for file #{file_name}"
   end
@@ -168,6 +220,7 @@ end
 #Lawn abundance surveys
 def read_lawn_survey(file_name, format)
   curr_file = UniSheet.new file_name
+  if format.downcase == "saltlake" then curr_file.set_sheet 2 end
   #Helper function - assumes particular ordering of front and back lawns
   def make_entry(state, parcel, sp_binomial, sp_common, location_index, abundance, reference=false)
     begin
@@ -189,13 +242,13 @@ def read_lawn_survey(file_name, format)
   
   output = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[], :abundance=>[]})
   case
-  when format.downcase == "minnesota"
+  when (format.downcase == "minnesota" or format.downcase == "saltlake")
     curr_file.each do |line|
       if line[0] and line[0]!= "Site" 
         (4..9).each do |i|
-           if line[i] then output << make_entry("MN", line[0].to_i, line[3], line[2], i-4, line[i]) end
-         end
-       end
+          if line[i] then output << make_entry("MN", line[0].to_i, line[3], line[2], i-4, line[i]) end
+        end
+      end
     end
   when format.downcase == "baltimore"
     curr_file.each do |line|
@@ -227,12 +280,31 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
   
   #iTree tests
   describe proc {read_iTree} do
-    it "loads iTree data correctly" do
+    it "loads standard iTree data correctly" do
       temp = read_iTree("test_files/iTree.csv")
-      assert temp.data == {:city_parcel=>["MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie"], :tree_no=>["1", "2", "1", "2", "3"], :sp_common=>["Eastern white pine", "Boxelder", "Eastern red cedar", "Boxelder", "Boxelder"], :dbh=>["7.5", "4.8", "19", "29.2", "29.8"], :height=>["12", "8", "8.5", "19.5", "17.5"], :ground_area=>["6.6", "8.6", "21.2", "75.4", "51.5"], :condition=>["Poor", "Fair", "Poor", "Good", "Fair"], :leaf_area=>["8.33", "14.64", "84.66", "373.98", "160.12"], :leaf_biomass=>["0.54", "1.34", "23.52", "34.21", "14.65"], :leaf_area_index=>["1.26", "1.71", "3.99", "4.96", "3.11"], :carbon_storage=>["3.4", "3.73", "42.72", "210.98", "214.2"], :gross_carbon_seq=>["0.5", "1.06", "1.81", "9.6", "9.62"], :money_value=>["84", "57", "210", "745", "662"], :street=>["NO", "NO", "NO", "NO", "NO"], :native=>["YES", "YES", "YES", "YES", "YES"]}
-      assert temp.ncol == 15
+      assert temp.data == {:city_parcel=>["MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie", "MSP_Lost Valley Prairie"], :tree_no=>["1", "2", "1", "2", "3"], :sp_binomial=>["", "", "", "", ""], :sp_common=>["Eastern white pine", "Boxelder", "Eastern red cedar", "Boxelder", "Boxelder"], :dbh=>["7.5", "4.8", "19", "29.2", "29.8"], :height=>["12", "8", "8.5", "19.5", "17.5"], :ground_area=>["6.6", "8.6", "21.2", "75.4", "51.5"], :condition=>["Poor", "Fair", "Poor", "Good", "Fair"], :leaf_area=>["8.33", "14.64", "84.66", "373.98", "160.12"], :leaf_biomass=>["0.54", "1.34", "23.52", "34.21", "14.65"], :leaf_area_index=>["1.26", "1.71", "3.99", "4.96", "3.11"], :carbon_storage=>["3.4", "3.73", "42.72", "210.98", "214.2"], :gross_carbon_seq=>["0.5", "1.06", "1.81", "9.6", "9.62"], :money_value=>["84", "57", "210", "745", "662"], :street=>["NO", "NO", "NO", "NO", "NO"], :native=>["YES", "YES", "YES", "YES", "YES"]}
+      assert temp.ncol == 16
       assert temp.nrow == 5
-      assert temp.col_names==[:city_parcel, :tree_no, :sp_common, :dbh, :height, :ground_area, :condition, :leaf_area, :leaf_biomass, :leaf_area_index, :carbon_storage, :gross_carbon_seq, :money_value, :street, :native]
+      assert temp.col_names==[:city_parcel, :tree_no, :sp_binomial, :sp_common, :dbh, :height, :ground_area, :condition, :leaf_area, :leaf_biomass, :leaf_area_index, :carbon_storage, :gross_carbon_seq, :money_value, :street, :native]
+    end
+    it "loads LA iTree data correctly" do
+      temp = read_iTree("test_files/la_iTree.csv", "la")
+      assert temp.data ==  {:city_parcel=>["LA_10317", "LA_3303"], :tree_no=>["1", "1"], :sp_binomial=>["Cercis canadensis", "Pinus edulis"], :sp_common=>["", ""], :dbh=>["8.5", "18.8"], :height=>["6.6", "3.3"], :ground_area=>["19.6", "3.1"], :condition=>["Excellent", "Excellent"], :leaf_area=>["61.9", "11.58"], :leaf_biomass=>["3.96", "1.12"], :leaf_area_index=>["3.15", "3.69"], :carbon_storage=>["8.92", "21.85"], :gross_carbon_seq=>["6.49", "5.43"], :money_value=>["477", "1773"], :street=>["NO", "NO"], :native=>["NO", "NO"]}
+      assert temp.ncol == 16
+      assert temp.nrow == 2
+      assert temp.col_names == [:city_parcel, :tree_no, :sp_binomial, :sp_common, :dbh, :height, :ground_area, :condition, :leaf_area, :leaf_biomass, :leaf_area_index, :carbon_storage, :gross_carbon_seq, :money_value, :street, :native]
+    end
+    it "loads Phoenix iTree data correctly" do
+      temp = read_iTree("test_files/phx_iTree.csv", "phoenix")
+      assert temp.data ==  {:city_parcel=>["PX_11668", "PX_11668", "PX_11668", "PX_11668", "PX_15263", "PX_15263", "PX_15263", "PX_15263", "PX_15263", "PX_15263"], :tree_no=>["", "", "", "", "", "", "", "", "", ""], :sp_binomial=>["Prosopis glandulosa hybrid", "Prosopis glandulosa hybrid", "Prosopis glandulosa hybrid", "Prosopis glandulosa hybrid", "Parkinsonia praecox", "Parkinsonia praecox", "Parkinsonia praecox", "Parkinsonia praecox", "Parkinsonia praecox", "Parkinsonia praecox"], :sp_common=>["Honey mesquite hybrid", "Honey mesquite hybrid", "Honey mesquite hybrid", "Honey mesquite hybrid", "Sonoran palo verde", "Sonoran palo verde", "Sonoran palo verde", "Sonoran palo verde", "Sonoran palo verde", "Sonoran palo verde"], :dbh=>["13.1", "5.5", "7.2", "5.2", "3.8", "4.4", "2.6", "3", "2.2", "4.1"], :height=>["5.35", "5.35", "5.35", "5.35", "4.6", "4.6", "4.6", "4.6", "4.6", "4.6"], :ground_area=>["", "", "", "", "", "", "", "", "", ""], :condition=>["", "", "", "", "", "", "", "", "", ""], :leaf_area=>["", "", "", "", "", "", "", "", "", ""], :leaf_biomass=>["", "", "", "", "", "", "", "", "", ""], :leaf_area_index=>["", "", "", "", "", "", "", "", "", ""], :carbon_storage=>["", "", "", "", "", "", "", "", "", ""], :gross_carbon_seq=>["", "", "", "", "", "", "", "", "", ""], :money_value=>["", "", "", "", "", "", "", "", "", ""], :street=>["", "", "", "", "", "", "", "", "", ""], :native=>["", "", "", "", "", "", "", "", "", ""]}
+      assert temp.ncol == 16
+      assert temp.nrow == 10
+      assert temp.col_names == [:city_parcel, :tree_no, :sp_binomial, :sp_common, :dbh, :height, :ground_area, :condition, :leaf_area, :leaf_biomass, :leaf_area_index, :carbon_storage, :gross_carbon_seq, :money_value, :street, :native]
+    end
+    it "Handles file types correctly" do
+      assert_raises(RuntimeError) {read_iTree("test_files/la_iTree.csv", "nonsense")}
+      assert read_iTree("test_files/iTree.csv") == read_iTree("test_files/iTree.csv", "default")
+      assert read_iTree("test_files/iTree.csv", "DeFaUlT") == read_iTree("test_files/iTree.csv", "default")
     end
   end
   
