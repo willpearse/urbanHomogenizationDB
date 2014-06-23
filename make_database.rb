@@ -1,6 +1,19 @@
 #!/usr/bin/env ruby
 #Example:
 #./make_database.rb esa.db /home/will/Dropbox/homogenization/data/CFANSClone/
+#Notes:
+#Converted social data to CSV because of XLSX loading problem (corrupt file?)"
+#Renamed some microclimates files to add .csv and remove .dxd and give MN decent names; not within script!
+#Using this over a network may cause problems; xlsx loading gem is rubbish
+#All Phoenix DBH heights are 1.7 so I've ignored this field
+
+#To-DO:
+#Salt Lake City and Phoenix has height for trees, but there seems to be the same measurement for many trees. This script loads this in as if it were correct; it likely isn't! 
+#Does not load all Balitmore data
+#Phoenix also seems to have none of the valuation information that the others sites have. Does this need to be run manually?
+#No tests written for Salt Lake City because OpenOffice is shite"
+#Add abundance to lawn survey!!!
+#Some lawn surveys have transect numbers in rural areas; include? (...probably, as a separate column...)
 
 require_relative 'lib/LoadingVegData.rb'
 require_relative 'lib/LoadingSoilData.rb'
@@ -12,15 +25,7 @@ require_relative 'lib/ProcessingData.rb'
 puts "\nUrban Homogenization of America - data cleaning and database generation script"
 puts "2014-6-01 - Will Pearse (wdpearse@umn.edu)"
 puts " - ESA edition - it only handles the data Will needs for ESA. Soz-a-loz."
-puts "Not recommended for use over a server. Watch for newly-created empty folders"
-puts " - these may indicate that XLSX files are being multiply loaded"
-puts "*** Does not load all Balitmore data"
-puts "*** Converted social data to CSV because of XLSX loading problem (corrupt file?)"
-puts "*** Renamed some microclimates files to add .csv and remove .dxd and give MN decent names; not within script!"
-puts "*** Salt Lake City and Phoenix has height for trees, but there seems to be the same measurement for many trees. This script loads this in as if it were correct; it likely isn't! All Phoenix DBH heights are 1.7 so I've ignored this field'"
-puts "*** Phoenix also seems to have none of the valuation information that the others sites have. Does this need to be run manually?"
-puts "*** No tests written for Salt Lake City because OpenOffice is shite"
-puts "Each full stop = one city's data loaded"
+
 if ARGV.length == 2
   if File.exist? ARGV[0]
     puts "\nERROR: Cowardly refusing to output to an existing database"
@@ -64,18 +69,18 @@ if ARGV.length == 2
     print ".";$stdout.flush
     #LA
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/LA_2013_iTree.csv", "la")
+    print ".";$stdout.flush
     #Phoenix
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/PHX iTree 13 Feb.xlsx")
     print ".";$stdout.flush
     #Salt Lake
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Salt Lake/SLC_SpeicesList_LawnQuad_Trees.xlsx", "saltlake")
     print ".";$stdout.flush
-    print " - #{iTree.nrow} rows of data read"
-
+    
     ########################
     #Vegetative surveys#####
     ########################
-    print "\nLoading vegetative survey data";$stdout.flush
+    print "\nLoading vegetative survey data  ";$stdout.flush
     veg_survey = DataFrame.new({:city_parcel=>[],:sp_common=>[],:sp_binomial=>[],:sp_native=>[],:location=>[],:cultivation=>[], :notes=>[]})
     veg_transect = DataFrame.new({:city_parcel=>[],:sp_binomial=>[], :transect=>[]})
     #Baltimore
@@ -94,7 +99,8 @@ if ARGV.length == 2
     veg_transect << read_veg_transect("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Lost Valley Prairie Diversity data.xlsx", "minnesota", "MN", "LostValley")
     print ".";$stdout.flush
     #Miami
-    #veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Miami Master Species List_FIU Query.xlsx", "miami")
+    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Vascular Diversity by ID code 2-21-13.xlsx", "miami")
+    veg_transect << read_veg_transect("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Miami Control Sites.xlsx", "miami", "FL")
     print ".";$stdout.flush
     #Boston
     veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Boston/Boston_specieslist.xls", "boston")
@@ -104,20 +110,22 @@ if ARGV.length == 2
     veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Phoenix/SP Diversity 30Sep.xlsx", "phoenix")
     print ".";$stdout.flush
     #Los Angeles
-
+    veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/LA/LA2013SpeciesInventory_Will_Corrections.xlsx", "la")
+    veg_transect << read_veg_transect("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/LA/LA2013SpeciesInventoryNativeCSSFinal4Will.xlsx", "la", "LA")
+    print ".";$stdout.flush
     #Salt Lake City
     veg_survey << read_veg_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Salt Lake/SLC_SpeicesList_LawnQuad_Trees.xlsx", "saltlake")
     veg_transect << read_veg_transect("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Salt Lake/SLC_ReferenceSites_ForWill.xlsx", "saltlake", "SL")
     print ".";$stdout.flush
-    print " - #{veg_transect.nrow} rows of transect and #{veg_survey.nrow} rows of survey data read"
 
     ########################
     #Abundance surveys######
     ########################
     print "\nLoading lawn survey data        ";$stdout.flush
-    lawn_survey = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[], :abundance=>[]})
-    lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Twin Cities Abundance Data.xls", "minnesota")
+    #Minnesota
+    lawn_survey = read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Twin Cities Data/Twin Cities Abundance Data.xls", "minnesota")
     print ".";$stdout.flush
+    #Baltimore
     Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Baltimore/lawn plant cover data" do |file|
       #Be careful of the diversity data that was accidentally placed in this folder...
       if File.file? file and file!=".DS_Store" and !file.include?("DIV")
@@ -130,22 +138,34 @@ if ARGV.length == 2
       end
     end
     print ".";$stdout.flush
+    #Boston
+    lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Boston/Boston lawn data 2012.xlsx", "boston")
+    print ".";$stdout.flush
+    #Phoenix
+    lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Phoenix/PHX Yard Cover 17 Feb.xlsx", "phoenix")
+    print ".";$stdout.flush
+    #LA
+    lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/LA/LA2013LawnCover4Will.xlsx", "la")
+    lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/LA/LA2013PlantCoverNativeCSSFinal4Will.xlsx", "la rural")
+    print ".";$stdout.flush
+    #Miami
+    lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Miami/Copy of Veg_grass_cover_LL.xlsx", "miami")
+    print ".";$stdout.flush
     #Salt Lake
     lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Salt Lake/SLC_SpeicesList_LawnQuad_Trees.xlsx", "saltlake")
     print ".";$stdout.flush
-    print " - #{lawn_survey.nrow} rows of data read"
     
     ########################
     #Phone surveys##########
     ########################
-    print "\nLoading telephone survey data";$stdout.flush
+    print "\nLoading telephone survey data   ";$stdout.flush
     phone_survey = read_social("Data-Parcel-Maps/Social/Full_Data_withComposite_Scale_02-17-14.csv")
     print "......";$stdout.flush
    
     ########################
     #Database cleaning######
     ########################
-    puts "\nProcessing and simplifying database..."
+    puts "\nProcessing database..."
     #Clean weird string values out
     iTree = clean_strings(iTree)
     veg_survey = clean_strings(veg_survey)
