@@ -40,6 +40,42 @@ if ARGV.length == 2
     rescue
       abort "\nERROR: Cannot load specified CFANS directory. Exiting with no cleanup..."
     end
+
+        ########################
+    #Microclimate###########  
+    ########################
+    print "\nLoading microclimate temperature and humidity data";$stdout.flush
+    #Baltimore
+    temp = []
+    Dir.foreach("iButton Data/Baltimore/August") {|file| if File.file? "iButton Data/Baltimore/August/"+file then temp << read_iButton("iButton Data/Baltimore/August/"+file, "BA") end}
+    Dir.foreach("iButton Data/Baltimore/Dec13") {|file| if File.file? "iButton Data/Baltimore/Dec13/"+file then temp << read_iButton("iButton Data/Baltimore/Dec13/"+file, "BA") end}
+    Dir.foreach("iButton Data/Baltimore/Forested Sites with Name Correction") {|file| if File.file? "iButton Data/Baltimore/Forested Sites with Name Correction/"+file then temp << read_iButton("iButton Data/Baltimore/Forested Sites with Name Correction/"+file, "BA") end}
+    print ".";$stdout.flush
+    #Boston
+    Dir.foreach("iButton Data/Boston/Jan 2014") {|file| if File.file? "iButton Data/Boston/Jan 2014/"+file then temp << read_iButton("iButton Data/Boston/Jan 2014/"+file, "BOS") end}
+    Dir.foreach("iButton Data/Boston/Nov 2013") {|file| if File.file? "iButton Data/Boston/Nov 2013/"+file then temp << read_iButton("iButton Data/Boston/Nov 2013/"+file, "BOS") end}
+    Dir.foreach("iButton Data/Boston/Sep") {|file| if File.file? "iButton Data/Boston/Sep/"+file then temp << read_iButton("iButton Data/Boston/Sep/"+file, "BOS") end}
+    print ".";$stdout.flush
+    #Los Angeles
+    Dir.foreach("iButton Data/Los Angeles/Sep") {|file| if File.file? "iButton Data/Los Angeles/Sep/"+file then temp << read_iButton("iButton Data/Los Angeles/Sep/"+file, "LA") end}
+    Dir.foreach("iButton Data/Los Angeles/Dec2013Jan2014") {|file| if File.file? "iButton Data/Los Angeles/Dec2013Jan2014/"+file then temp << read_iButton("iButton Data/Los Angeles/Dec2013Jan2014/"+file, "LA") end}
+    print ".";$stdout.flush
+    #Miami
+    Dir.foreach("iButton Data/Miami/July") {|file| if File.file? "iButton Data/Miami/July/"+file then temp << read_iButton("iButton Data/Miami/July/"+file, "FL") end}
+    Dir.foreach("iButton Data/Miami/October") {|file| if File.file? "iButton Data/Miami/October/"+file then temp << read_iButton("iButton Data/Miami/October/"+file, "FL") end}
+    print ".";$stdout.flush
+    #Minnesota
+    Dir.foreach("iButton Data/MSP") {|file| if File.file? "iButton Data/MSP/"+file then temp << read_iButton("iButton Data/MSP/"+file, "MN") end}
+    print ".";$stdout.flush
+    #Combine...
+    print " - combining..."
+    micro_temp = DataFrame.new({:city_parcel=>[],:date=>[],:time=>[],:temperature=>[]})
+    micro_humidity = DataFrame.new({:city_parcel=>[],:date=>[],:time=>[],:humidity=>[]})
+    temp.each do |entry|
+      micro_temp << entry[0]
+      micro_humidity << entry[1]
+    end
+    print " - #{micro_temp.nrow} + #{micro_temp.nrow} rows of data read"
     
     ########################
     #iTree##################
@@ -70,7 +106,7 @@ if ARGV.length == 2
     #LA
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/LA_2013_iTree.csv", "la")
     print ".";$stdout.flush
-    #Phoenix
+``    #Phoenix
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/PHX iTree 13 Feb.xlsx")
     print ".";$stdout.flush
     #Salt Lake
