@@ -80,7 +80,18 @@ class UniSheet
     else
       raise RuntimeError, "File #{@file_name} is not an xls or xlsx file, so cannot change sheet" 
     end
-  end 
+  end
+
+  #Find number of sheets if xls or xlsx file
+  def n_sheets()
+    if @file_type == "xls"
+      return @excel_book.sheet_count
+     elsif @file_type == "xlsx"
+       return @xlsx_book.worksheets.size
+     else
+       raise RuntimeError, "File #{@file_name} is not an xls or xlsx file, so has only one sheet"
+    end
+  end
 end
 
 #Run tests if we're just running this script from the command line
@@ -132,6 +143,9 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       it "Handles multiple sheets" do
         @xlsx_test.set_sheet 1
         assert @xlsx_test[0][0] == "Another sheet"
+        assert @xlsx_test.n_sheets == 2
+        assert @xls_test.n_sheets == 2
+        assert_raises(RuntimeError) {@csv_test.n_sheets}
       end
     end
     describe "When loading files" do

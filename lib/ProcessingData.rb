@@ -114,6 +114,20 @@ def merge_cpp(data_array)
   return [data_array, cpp_mapping]
 end
 
+def change_names!(mapping, data_frame, to_replace)
+  #Assertions
+  unless mapping.is_a? Hash then raise(RuntimeError, "Need hash for name mapping") end
+  unless data_frame.is_a? DataFrame then raise(RuntimeError, "Need DataFrame to alter name mapping") end
+  unless to_replace.is_a? Symbol then raise(RuntimeError, "Need symbol for name mapping") end
+  unless data_frame.col_names.include? to_replace then raise(RuntimeError, "DataFrame must contain replacement column") end
+  
+  #We are altering in place, remember
+  mapping.each do |name, replacement|
+    unless data_frame[to_replace].include? name then raise(RuntimeError, "#{name} to replace not found in column #{to_check}") end
+    data_frame[to_replace].map! {|each| if each == name then replacement else each end }
+  end
+end
+
 #Run tests if we're running this from the command line
 if File.identical?(__FILE__, $PROGRAM_NAME)
   require 'minitest/spec'
@@ -176,6 +190,25 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       assert clean_strings(data) == DataFrame.new({:sp_binomial=>["Bobs Dylan", "Bobs uncle"], :sp_common=>["Bobs Dylan", "Bobs uncle"]})
     end
   end
+
+  describe proc {change_names} do
+    it "Alters DataFrames correctly and in-place" do
+      t_map = {"NA_NA"=>"Bristol_1"}
+      t_data_frame = DataFrame.new({:city_parcel=>["Bristol_1", "Bristol_2", "NA_NA"], :cpp_index=>[1,2,3]})
+      change_names!(t_map, t_data_frame, :city_parcel)
+      assert t_data_frame.data == {:city_parcel=>["Bristol_1", "Bristol_2", "Bristol_1"], :cpp_index=>[1, 2, 3]}
+    end
+    it "Returns errors if passed incorrect information" do
+      t_map = {"NA_NA"=>["Bristol_1"]}
+      wrong_map = {"NA_something_NA"=>["Bristol_1"]}
+      t_data_frame = DataFrame.new({:city_parcel=>["Bristol_1", "Bristol_2", "NA_NA"], :cpp_index=>[1,2,3]})
+      assert_raises RuntimeError do 
+        change_names!(t_map, t_data_frame, :wrong)
+        #change_names!(wrong_map, t_data_frame, :city_parcel)
+      end
+    end
+  end
+  
   if File.file? "assertion_test.db"
     File.delete "assertion_test.db"
   end
