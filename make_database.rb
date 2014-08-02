@@ -40,42 +40,6 @@ if ARGV.length == 2
     rescue
       abort "\nERROR: Cannot load specified CFANS directory. Exiting with no cleanup..."
     end
-
-        ########################
-    #Microclimate###########  
-    ########################
-    print "\nLoading microclimate temperature and humidity data";$stdout.flush
-    #Baltimore
-    temp = []
-    Dir.foreach("iButton Data/Baltimore/August") {|file| if File.file? "iButton Data/Baltimore/August/"+file then temp << read_iButton("iButton Data/Baltimore/August/"+file, "BA") end}
-    Dir.foreach("iButton Data/Baltimore/Dec13") {|file| if File.file? "iButton Data/Baltimore/Dec13/"+file then temp << read_iButton("iButton Data/Baltimore/Dec13/"+file, "BA") end}
-    Dir.foreach("iButton Data/Baltimore/Forested Sites with Name Correction") {|file| if File.file? "iButton Data/Baltimore/Forested Sites with Name Correction/"+file then temp << read_iButton("iButton Data/Baltimore/Forested Sites with Name Correction/"+file, "BA") end}
-    print ".";$stdout.flush
-    #Boston
-    Dir.foreach("iButton Data/Boston/Jan 2014") {|file| if File.file? "iButton Data/Boston/Jan 2014/"+file then temp << read_iButton("iButton Data/Boston/Jan 2014/"+file, "BOS") end}
-    Dir.foreach("iButton Data/Boston/Nov 2013") {|file| if File.file? "iButton Data/Boston/Nov 2013/"+file then temp << read_iButton("iButton Data/Boston/Nov 2013/"+file, "BOS") end}
-    Dir.foreach("iButton Data/Boston/Sep") {|file| if File.file? "iButton Data/Boston/Sep/"+file then temp << read_iButton("iButton Data/Boston/Sep/"+file, "BOS") end}
-    print ".";$stdout.flush
-    #Los Angeles
-    Dir.foreach("iButton Data/Los Angeles/Sep") {|file| if File.file? "iButton Data/Los Angeles/Sep/"+file then temp << read_iButton("iButton Data/Los Angeles/Sep/"+file, "LA") end}
-    Dir.foreach("iButton Data/Los Angeles/Dec2013Jan2014") {|file| if File.file? "iButton Data/Los Angeles/Dec2013Jan2014/"+file then temp << read_iButton("iButton Data/Los Angeles/Dec2013Jan2014/"+file, "LA") end}
-    print ".";$stdout.flush
-    #Miami
-    Dir.foreach("iButton Data/Miami/July") {|file| if File.file? "iButton Data/Miami/July/"+file then temp << read_iButton("iButton Data/Miami/July/"+file, "FL") end}
-    Dir.foreach("iButton Data/Miami/October") {|file| if File.file? "iButton Data/Miami/October/"+file then temp << read_iButton("iButton Data/Miami/October/"+file, "FL") end}
-    print ".";$stdout.flush
-    #Minnesota
-    Dir.foreach("iButton Data/MSP") {|file| if File.file? "iButton Data/MSP/"+file then temp << read_iButton("iButton Data/MSP/"+file, "MN") end}
-    print ".";$stdout.flush
-    #Combine...
-    print " - combining..."
-    micro_temp = DataFrame.new({:city_parcel=>[],:date=>[],:time=>[],:temperature=>[]})
-    micro_humidity = DataFrame.new({:city_parcel=>[],:date=>[],:time=>[],:humidity=>[]})
-    temp.each do |entry|
-      micro_temp << entry[0]
-      micro_humidity << entry[1]
-    end
-    print " - #{micro_temp.nrow} + #{micro_temp.nrow} rows of data read"
     
     ########################
     #iTree##################
@@ -106,7 +70,7 @@ if ARGV.length == 2
     #LA
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/LA_2013_iTree.csv", "la")
     print ".";$stdout.flush
-``    #Phoenix
+    #Phoenix
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/PHX iTree 13 Feb.xlsx")
     print ".";$stdout.flush
     #Salt Lake
@@ -190,6 +154,13 @@ if ARGV.length == 2
     #Salt Lake
     lawn_survey << read_lawn_survey("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Salt Lake/SLC_SpeicesList_LawnQuad_Trees.xlsx", "saltlake")
     print ".";$stdout.flush
+
+    ########################
+    #Soil cores#############
+    ########################
+    print "\nLoading soil data               ";$stdout.flush
+    soil = read_soil("Data-Parcel-Maps/Soil/MSB_all data with categories.xlsx")
+    print "......";$stdout.flush
     
     ########################
     #Phone surveys##########
@@ -208,17 +179,19 @@ if ARGV.length == 2
     veg_transect = clean_strings(veg_transect)
     lawn_survey = clean_strings(lawn_survey)
     phone_survey = clean_strings(phone_survey)
+    soil = clean_strings(soil)
     #Create taxonomy table
     merger = merge_names([veg_survey, veg_transect, lawn_survey, iTree])
     veg_survey, veg_transect, lawn_survey, iTree = merger[0]
     taxonomy = merger[1]
     #Create city_parcel table
-    merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey, phone_survey])
-    iTree, veg_survey, veg_transect, lawn_survey, phone_survey = merger[0]
+    merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey, phone_survey, soil])
+    iTree, veg_survey, veg_transect, lawn_survey, phone_survey, soil = merger[0]
     city_parcel = merger[1]
 
     #Cleanup site names
     change_names!({"BA_"=>"BA_6503"}, city_parcel, :city_parcel)
+    change_names_regex!({"LAX"=>"LA", "MSP"=>"MN", "BAL"=>"BA", "MIA"=>"FL"}, city_parcel, :city_parcel)
 
     ########################
     #Database writing#######
@@ -234,8 +207,10 @@ if ARGV.length == 2
     add_to_data_base(lawn_survey, db, "LawnSurvey", nil)
     db.execute "CREATE TABLE PhoneSurvey (cpp_index TEXT, income TEXT, landuse TEXT, year_built TEXT, yard_type TEXT, income_survey TEXT, income_combined TEXT, density_level TEXT, income_level TEXT, north_south TEXT, east_west TEXT, floral_biodiversity TEXT, local_nature_provisioning TEXT, supporting_environmental_services TEXT, local_cultural_value TEXT, neat_aesthetic TEXT, appearance TEXT, low_maintenance TEXT, low_cost TEXT, veg_private TEXT, veg_food TEXT, veg_cool TEXT, veg_condit TEXT, veg_common TEXT, veg_legac TEXT, yrd_weeds TEXT, yrd_looks TEXT, yrd_enjoy TEXT, yrd_social TEXT, yrd_common TEXT, yrd_air TEXT, yrd_climate TEXT, yrd_green TEXT, veg_aest TEXT, veg_ease TEXT, veg_wldlf TEXT, veg_nativ TEXT, veg_neat TEXT, veg_cost TEXT, veg_kids TEXT, veg_pets TEXT, veg_hoa TEXT, yrd_divers TEXT, yrd_learn TEXT, yrd_beaut TEXT, yrd_values TEXT, yrd_cost TEXT, yrd_tradit TEXT, yrd_drain TEXT, yrd_ease TEXT, yrd_pollut TEXT, yrd_neat TEXT, yrd_soil TEXT, yrd_kids TEXT, yrd_pets TEXT, yrd_flwrs TEXT)"   
     add_to_data_base(phone_survey, db, "PhoneSurvey", nil)
-    db.execute "CREATE TABLE Taxonomy (sp_binomial TEXT, sp_index TEXT)"
+    db.execute "CREATE TABLE Taxonomy (sp_binomial TEXT, sp_index TEXT)"    
     add_to_data_base(taxonomy, db, "Taxonomy", nil)
+    db.execute "CREATE TABLE SoilSurvey (cpp_index TEXT, date TEXT, core_id TEXT, site_no TEXT, core_no TEXT, plot_no TEXT, depth TEXT, total_L TEXT, notes TEXT, core_sections TEXT, section_length TEXT, volume TEXT, tot_sub_rock_vol TEXT, wet_weight TEXT, dry_weight TEXT, dry_weight_sub_rock_weight TEXT, density TEXT, root_mass TEXT, rock_mass TEXT, rock_vol TEXT, microb_biomass TEXT, respiration TEXT, NO2_over_NO3 TEXT, NH4 TEXT, bio_N TEXT, mineral TEXT, nitrogen TEXT, moisture TEXT, DEA TEXT, percent_sand TEXT, pH TEXT)"    
+    add_to_data_base(soil, db, "SoilSurvey", nil)
     db.execute "CREATE TABLE City_Parcel (city_parcel TEXT, cpp_index TEXT)"
     add_to_data_base(city_parcel, db, "City_Parcel", nil)
     
