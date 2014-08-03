@@ -52,19 +52,14 @@ if ARGV.length == 3
     ########################
     print "\nLoading soil microclimate data  ";$stdout.flush
     soil_microclimate = DataFrame.new({:date=>[],:city_parcel=>[],:moisture=>[],:temperature=>[]})
-    
     #Baltimore
     Dir.foreach("Soil Moisture Sensor Data/Baltimore") {|file|
       if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Baltimore/"+file, "BA", 2) end}
     Dir.foreach("Soil Moisture Sensor Data/Baltimore/Forested Sites with name corrections") {|file| if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Baltimore/Forested Sites with name corrections/"+file, "BA", 0) end}
     print ".";$stdout.flush
-    
     #Boston
     Dir.foreach("Soil Moisture Sensor Data/Boston/Sep") {|file|
-      if file[".xls"]
-        puts file
-        soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Boston/Sep/"+file, "BOS", 0)
-      end}
+      if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Boston/Sep/"+file, "BOS", 0)}
     print ".";$stdout.flush
     #Miami
     Dir.foreach("Soil Moisture Sensor Data/Miami") {|file| if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Miami/"+file, "BOS", 2) end}
