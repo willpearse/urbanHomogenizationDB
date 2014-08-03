@@ -1,20 +1,25 @@
 #Setup; load from a (recent) dump of the taxonomy table
 require(Taxonstand)
-species <- read.csv("/home/will/Dropbox/homogenization/database/species.csv")
-db.names <- species[,1]
+require(testdat)
+species <- read.csv("species_dump.csv")
+db.names <- as.character(species[,1])
 
-#Basic pre-processing to remove sp., fix known fuck-ups, etc.
+#Basic pre-processing to remove sp., fix character encoding, etc.
 lookup <- data.frame(db.names, search.term=db.names, final.cut=rep(TRUE, length(db.names)))
 lookup$search.term <- gsub(" sp.", "", lookup$search.term, fixed=TRUE)
 lookup$search.term <- gsub(" spp.", "", lookup$search.term, fixed=TRUE)
 lookup$search.term <- gsub("[0-9]*", "", lookup$search.term)
 lookup$search.term <- gsub("#", "", lookup$search.term, fixed=TRUE)
-lookup$search.term[grepl("hibiscus rosa-sinensis", lookup$search.term, fixed=TRUE)] <- "hibiscus rosa-sinesnsis"
-lookup$search.term[lookup$search.term==" quercus rubra"] <- "quercus rubra"
-lookup$search.term[lookup$search.term=="calyptocarpus  vialis_straggler daisy"] <- "calyptocarpus vialis"
-lookup$search.term[lookup$search.term=="drymaria  cordata_west indian chickweed"] <- "drymaria cordata"
-lookup$search.term[lookup$search.term=="dypsis  lutescens_areca palm"] <- "dypsis lutescens"
-lookup$search.term[lookup$search.term=="eremochloa  ophiuroides"] <- "eremochloa ophiuroides"
+lookup$search.term <- gsub("cult.", "", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub("_", " ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub(".", " ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub("+", " ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub(" ", " ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub("  ", " ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub("  ", " ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub(" × ", " x ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- sanitize_text(lookup$search.term)
+
 
 #Pull out just the genera and species names
 # - weird splits because apparently there're some character encoding issues
@@ -24,7 +29,6 @@ lookup$final.cut <- lookup$final.cut & lookup$gen.search != ""
 lookup$final.cut <- lookup$final.cut & lookup$gen.search != "x"
 lookup$final.cut <- lookup$final.cut & lookup$gen.search != "×"
 genera.only <- unique(as.character(lookup$gen.search))
-
 lookup$final.cut <- lookup$final.cut & lookup$sp.search != "x"
 lookup$final.cut <- lookup$final.cut & !is.na(lookup$sp.search)
 lookup$final.cut <- lookup$final.cut & lookup$sp.search != "×"
@@ -40,11 +44,9 @@ lookup$gen.search <- as.character(lookup$gen.search)
 genera.only <- setdiff(genera.only, lookup$gen.search[lookup$final.cut==TRUE])
 
 #Do the search
-plant.list <- with(lookup[lookup$final.cut,], TPL(genus=gen.search, species=sp.search, corr=TRUE, infra=FALSE))
+plant.list <- with(lookup[lookup$final.cut,], TPL(splist=paste(gen.search, sp.search)))
 
-
-
-save.image("/home/will/Dropbox/homogenization/phylogeny/names.RData")
+#save.image("names.RData")
 
 #Fill in the results of the search
 lookup$tpl.binomial <- lookup$tpl.family <- lookup$tpl.genus <- rep("NA", nrow(lookup))
@@ -75,62 +77,7 @@ for(i in seq(nrow(lookup))){
     }
   }
 }
-#Manually handle the remaining genus-only measures we have nothing for...
-# - slow, but easy to type!
-# - found from lookup$db.names[lookup$gen.search %in% genera.only]
-# - for the record, I think this is a very bad idea. Some of these could easily be hybrids, and we wouldn't know. I think the _unknowns should be stripped from the (phylogenetic) database
-fix.entry <- function(table, db.sp, genus.name){
-  table$tpl.genus[table$db.names==db.sp] <- genus.name
-  table$tpl.binomial[table$db.names==db.sp] <- paste(genus.name, "unknown", sep="_")
-  table$tpl.family[table$db.names==db.sp] <- "unknown"
-  table$tpl.authority[table$db.names==db.sp] <- "unknown"
-  return(table)
-}
-lookup <- fix.entry(lookup, "ageratum spp.", "ageratum")
-lookup <- fix.entry(lookup, "araceae sp._", "araceae")
-lookup <- fix.entry(lookup, "asilbe sp. 1", "asilbe")
-lookup <- fix.entry(lookup, "baptisia spp.", "baptisia")
-lookup <- fix.entry(lookup, "bromeliaceae sp._", "bromeliaceae")
-lookup <- fix.entry(lookup, "cleome sp. 1", "cleome")
-lookup <- fix.entry(lookup, "cortaderia cv.", "cortaderia")
-lookup <- fix.entry(lookup, "cosmos spp.", "cosmos")
-lookup <- fix.entry(lookup, "dahlia", "dahlia")
-lookup <- fix.entry(lookup, "echeveria spp.", "echeveria")
-lookup <- fix.entry(lookup, "gladiolus sp.", "gladiolus")
-lookup <- fix.entry(lookup, "gladiolus sp. 1", "gladiolus")
-lookup <- fix.entry(lookup, "gnapthalium sp._", "gnapthalium")
-lookup <- fix.entry(lookup, "latania_", "latania")
-lookup <- fix.entry(lookup, "lemna spp.", "lemna")
-lookup <- fix.entry(lookup, "luzula sp.", "luzula")
-lookup <- fix.entry(lookup, "lyonia cf.", "lyonia")
-lookup <- fix.entry(lookup, "myosotis spp.", "myosotis")
-lookup <- fix.entry(lookup, "narcissus sp. 1", "narcissus")
-lookup <- fix.entry(lookup, "narcissus spp.", "narcissus")
-lookup <- fix.entry(lookup, "nepetea sp.", "nepetea")
-lookup <- fix.entry(lookup, "orchidaceae sp. #1_", "orchidaceae")
-lookup <- fix.entry(lookup, "orchidaceae sp. #2_", "orchidaceae")
-lookup <- fix.entry(lookup, "orchidaceae sp. #3_", "orchidaceae")
-lookup <- fix.entry(lookup, "orchidaceae sp. #4_", "orchidaceae")
-lookup <- fix.entry(lookup, "orchidaceae sp._", "orchidaceae")
-lookup <- fix.entry(lookup, "osteospermum spp.", "osteospermum")
-lookup <- fix.entry(lookup, "pelagonium sp. 1", "pelagonium")
-lookup <- fix.entry(lookup, "petunia spp.", "petunia")
-lookup <- fix.entry(lookup, "phaleonopsis sp._", "phaleonopsis")
-lookup <- fix.entry(lookup, "philodendron sp. #1_", "philodendron")
-lookup <- fix.entry(lookup, "philodendron sp. #2_", "philodendron")
-lookup <- fix.entry(lookup, "philodendron spp.", "philodendron")
-lookup <- fix.entry(lookup, "portea sp._", "portea")
-lookup <- fix.entry(lookup, "scaevola spp.", "scaevola")
-lookup <- fix.entry(lookup, "selaginella cf.", "selaginella")
-lookup <- fix.entry(lookup, "selaginella spp.", "selaginella")
-lookup <- fix.entry(lookup, "selenicereus  sp._", "selenicereus")
-lookup <- fix.entry(lookup, "solanaceae sp._", "solanaceae")
-lookup <- fix.entry(lookup, "spathiphyllum spp.", "spathiphyllum")
-lookup <- fix.entry(lookup, "spathophyllum  sp._", "spathophyllum")
-lookup <- fix.entry(lookup, "tricyrtis sp. 1", "tricyrtis")
-lookup <- fix.entry(lookup, "trillium sp. 1", "trillium")
-lookup <- fix.entry(lookup, "vriesea sp._", "vriesea")
-lookup <- fix.entry(lookup, "zinia sp.", "zinia")
 
 #Write it out!
-write.csv(lookup, "/home/will/Dropbox/homogenization/database/taxonomy.csv", row.names=FALSE, col.names=FALSE, quote=FALSE)
+output <- data.frame(seq(nrow(lookup)), lookup$db.names, lookup$tpl.binomial)
+write.csv(output, "taxonomy.csv", row.names=FALSE, col.names=FALSE, quote=FALSE)

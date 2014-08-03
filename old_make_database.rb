@@ -36,7 +36,7 @@ if ARGV.length == 2
     ########################
     #Microclimate###########  
     ########################
-    print "\nLoading microclimate temperature and humidity data";$stdout.flush
+    print "\nLoading microclimate data";$stdout.flush
     #Baltimore
     temp = []
     Dir.foreach("iButton Data/Baltimore/August") {|file| if File.file? "iButton Data/Baltimore/August/"+file then temp << read_iButton("iButton Data/Baltimore/August/"+file, "BA") end}
