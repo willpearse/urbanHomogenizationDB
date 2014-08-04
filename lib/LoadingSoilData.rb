@@ -6,6 +6,7 @@ def read_soil_microclimate(file_name, city, split)
   output = DataFrame.new({:date=>[],:city_parcel=>[],:moisture=>[],:temperature=>[]})
   curr_file = UniSheet.new file_name
   city_parcel = city + "_" + file_name.split(/\/|\\/)[-1].split("_")[split]
+  city_parcel.gsub!(".xls", "")
   curr_file.each do |line|
     if line[1] and line[1]!="Port 1" and line[1]!="5TM Moisture/Temp" and line[1]!="m³/m³ VWC"
       output << {:date=>[line[0].to_s],:city_parcel=>[city_parcel],:moisture=>[line[1]],:temperature=>[line[2]]}

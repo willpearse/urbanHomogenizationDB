@@ -19,6 +19,7 @@ require_relative 'lib/LoadingVegData.rb'
 require_relative 'lib/LoadingSoilData.rb'
 require_relative 'lib/LoadingSocialData.rb'
 require_relative 'lib/LoadingMicroclimateData.rb'
+require_relative 'lib/LoadingMetadata.rb'
 require_relative 'lib/ProcessingData.rb'
 
 #MAIN
@@ -48,18 +49,24 @@ if ARGV.length == 3
     end
 
     ########################
+    #Metadata######
+    ########################
+    print "\nLoading parcel meta-data        ";$stdout.flush
+    metadata = read_site_cats("Data-Parcel-Maps/Data-Biophysical/MSB_parcels_categories.xlsx")
+    print "......";$stdout.flush
+    
+    ########################
     #Soil microclimate######
     ########################
     print "\nLoading soil microclimate data  ";$stdout.flush
     soil_microclimate = DataFrame.new({:date=>[],:city_parcel=>[],:moisture=>[],:temperature=>[]})
     #Baltimore
-    Dir.foreach("Soil Moisture Sensor Data/Baltimore") {|file|
-      if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Baltimore/"+file, "BA", 2) end}
+    Dir.foreach("Soil Moisture Sensor Data/Baltimore") {|file| if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Baltimore/"+file, "BA", 2) end}
+    
     Dir.foreach("Soil Moisture Sensor Data/Baltimore/Forested Sites with name corrections") {|file| if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Baltimore/Forested Sites with name corrections/"+file, "BA", 0) end}
     print ".";$stdout.flush
     #Boston
-    Dir.foreach("Soil Moisture Sensor Data/Boston/Sep") {|file|
-      if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Boston/Sep/"+file, "BOS", 0)}
+    Dir.foreach("Soil Moisture Sensor Data/Boston/Sep") {|file| if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Boston/Sep/"+file, "BOS", 0) end}
     print ".";$stdout.flush
     #Miami
     Dir.foreach("Soil Moisture Sensor Data/Miami") {|file| if file[".xls"] then soil_microclimate << read_soil_microclimate("Soil Moisture Sensor Data/Miami/"+file, "BOS", 2) end}
@@ -68,6 +75,7 @@ if ARGV.length == 3
     ########################
     #Microclimate###########  
     ########################
+    
     print "\nLoading microclimate data       ";$stdout.flush
     #Baltimore
     microclimate = DataFrame.new({:city_parcel=>[],:date=>[],:time=>[],:type=>[],:value=>[]})
@@ -122,7 +130,7 @@ if ARGV.length == 3
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/LA_2013_iTree.csv", "la")
     print ".";$stdout.flush
     #Phoenix
-    iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/PHX iTree 13 Feb.xlsx")
+    iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/PHX iTree 13 Feb.xlsx", "phoenix")
     print ".";$stdout.flush
     #Salt Lake
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Salt Lake/SLC_SpeicesList_LawnQuad_Trees.xlsx", "saltlake")
@@ -233,16 +241,17 @@ if ARGV.length == 3
     soil = clean_strings(soil)
     microclimate = clean_strings(microclimate)
     soil_microclimate = clean_strings(soil_microclimate)
+    metadata = clean_strings(metadata)
 
     #Create city_parcel table
-    merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey, phone_survey, soil, microclimate, soil_microclimate])
-    iTree, veg_survey, veg_transect, lawn_survey, phone_survey, soil, microclimate, soil_microclimate = merger[0]
+    merger = merge_cpp([iTree, veg_survey, veg_transect, lawn_survey, phone_survey, soil, microclimate, soil_microclimate, metadata])
+    iTree, veg_survey, veg_transect, lawn_survey, phone_survey, soil, microclimate, soil_microclimate, metadata = merger[0]
     city_parcel = merger[1]
 
     #Cleanup site names
     change_names!({"BA_"=>"BA_6503"}, city_parcel, :city_parcel)
-    change_names_regex!({"LAX"=>"LA", "MSP"=>"MN", "BAL"=>"BA", "MIA"=>"FL"}, city_parcel, :city_parcel)
-
+    change_names_regex!({"LAX"=>"LA", "MSP"=>"MN", "BAL"=>"BA", "MIA"=>"FL", "AZ"=>"PHX"}, city_parcel, :city_parcel)
+    
     ########################
     #Taxonomy###############
     ########################
@@ -280,7 +289,7 @@ if ARGV.length == 3
     add_to_data_base(veg_survey, db, "VegSurvey", nil)
     db.execute "CREATE TABLE VegTransect (cpp_index TEXT, sp_index TEXT, transect TEXT)"
     add_to_data_base(veg_transect, db, "VegTransect", nil)  
-    db.execute "CREATE TABLE LawnSurvey (cpp_index TEXT, sp_index TEXT, sp_common TEXT, location TEXT, abundance INT)"
+    db.execute "CREATE TABLE LawnSurvey (cpp_index TEXT, sp_index TEXT, sp_common TEXT, location TEXT, abundance INT, transect TEXT)"
     add_to_data_base(lawn_survey, db, "LawnSurvey", nil)
     db.execute "CREATE TABLE PhoneSurvey (cpp_index TEXT, income TEXT, landuse TEXT, year_built TEXT, yard_type TEXT, income_survey TEXT, income_combined TEXT, density_level TEXT, income_level TEXT, north_south TEXT, east_west TEXT, floral_biodiversity TEXT, local_nature_provisioning TEXT, supporting_environmental_services TEXT, local_cultural_value TEXT, neat_aesthetic TEXT, appearance TEXT, low_maintenance TEXT, low_cost TEXT, veg_private TEXT, veg_food TEXT, veg_cool TEXT, veg_condit TEXT, veg_common TEXT, veg_legac TEXT, yrd_weeds TEXT, yrd_looks TEXT, yrd_enjoy TEXT, yrd_social TEXT, yrd_common TEXT, yrd_air TEXT, yrd_climate TEXT, yrd_green TEXT, veg_aest TEXT, veg_ease TEXT, veg_wldlf TEXT, veg_nativ TEXT, veg_neat TEXT, veg_cost TEXT, veg_kids TEXT, veg_pets TEXT, veg_hoa TEXT, yrd_divers TEXT, yrd_learn TEXT, yrd_beaut TEXT, yrd_values TEXT, yrd_cost TEXT, yrd_tradit TEXT, yrd_drain TEXT, yrd_ease TEXT, yrd_pollut TEXT, yrd_neat TEXT, yrd_soil TEXT, yrd_kids TEXT, yrd_pets TEXT, yrd_flwrs TEXT)"   
     add_to_data_base(phone_survey, db, "PhoneSurvey", nil)
@@ -300,6 +309,8 @@ if ARGV.length == 3
     add_to_data_base(soil, db, "SoilSurvey", nil)
     db.execute "CREATE TABLE City_Parcel (city_parcel TEXT, cpp_index TEXT)"
     add_to_data_base(city_parcel, db, "City_Parcel", nil)
+    db.execute "CREATE TABLE MetaData (cpp_index TEXT, code TEXT, cat_one TEXT, cat_two TEXT, age TEXT, prev TEXT, meta_area TEXT)"
+    add_to_data_base(metadata, db, "MetaData", nil)
     
     puts "\nFinished!\n"
   end

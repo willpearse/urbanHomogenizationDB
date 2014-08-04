@@ -19,3 +19,17 @@ FROM VegTransect INNER JOIN Taxonomy ON VegTransect.sp_index=Taxonomy.sp_index
 --Getting total species list out
 .output species.csv
 SELECT * from Taxonomy;
+
+--Getting overlap between tables
+.output overlap.csv
+SELECT
+   City_Parcel.*,
+   (SELECT COUNT(*) FROM LawnSurvey WHERE cpp_index = City_Parcel.cpp_index) AS LawnCount,
+   (SELECT COUNT(*) FROM VegSurvey WHERE cpp_index = City_Parcel.cpp_index) AS VegCount,
+   (SELECT COUNT(*) FROM PhoneSurvey WHERE cpp_index = City_Parcel.cpp_index) AS PhoneCount,
+   (SELECT COUNT(*) FROM iTree WHERE cpp_index = City_Parcel.cpp_index) AS iTreeCount,
+   (SELECT COUNT(*) FROM SoilMicroclimate WHERE cpp_index = City_Parcel.cpp_index) AS SoilClimCount,
+   (SELECT COUNT(*) FROM Microclimate WHERE cpp_index = City_Parcel.cpp_index) AS MicroCount,
+   (SELECT COUNT(*) FROM SoilSurvey WHERE cpp_index = City_Parcel.cpp_index) AS SoilCount
+FROM 
+   City_Parcel;
