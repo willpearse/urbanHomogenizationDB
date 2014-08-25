@@ -27,7 +27,6 @@ puts "\nUrban Homogenization of America database script"
 puts "v0.3 - DEV - Will Pearse (wdpearse@umn.edu)"
 puts "*** Does not load all Balitmore data"
 puts "*** Converted social data to CSV because of XLSX loading problem (corrupt file?)"
-puts "*** Currently don't know the name of cities 2 and 5; confirm (check with lookup)"
 puts "*** Renamed some microclimates files to add .csv and remove .dxd and give MN decent names; not within script!"
 puts "*** Only loads the processed soil microclimate data; the raw structure is intelligible but I'm unwilling to put my neck out and guess!"
 puts "Each full stop = one city's data loaded"
@@ -47,12 +46,12 @@ if ARGV.length == 3
     rescue
       abort "\nERROR: Cannot load specified CFANS directory. Exiting with no cleanup..."
     end
-
+    
     ########################
-    #Metadata######
+    #Metadata###############
     ########################
     print "\nLoading parcel meta-data        ";$stdout.flush
-    metadata = read_site_cats("Data-Parcel-Maps/Data-Biophysical/MSB_parcels_categories.xlsx")
+    metadata = read_site_cats("Data-Parcel-Maps/Data-Biophysical/MSB_parcels_categories_wdp.xlsx")
     print "......";$stdout.flush
     
     ########################
@@ -75,7 +74,6 @@ if ARGV.length == 3
     ########################
     #Microclimate###########  
     ########################
-    
     print "\nLoading microclimate data       ";$stdout.flush
     #Baltimore
     microclimate = DataFrame.new({:city_parcel=>[],:date=>[],:time=>[],:type=>[],:value=>[]})
@@ -110,11 +108,13 @@ if ARGV.length == 3
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Wolsfeld Woods SNA iTree summary.csv")
     iTree << read_iTree("Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Wood Rill SNA iTree summary.csv")
     Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/iTree Data" do |file|
+      file = "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/iTree Data/"+file
       iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
     end
     print ".";$stdout.flush
     #Baltimore
     Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Baltimore" do |file|
+      file = "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Baltimore/"+file
       iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
     end
     print ".";$stdout.flush
@@ -123,6 +123,7 @@ if ARGV.length == 3
     print ".";$stdout.flush
     #Miami
     Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Miami" do |file|
+      file = "Data-Parcel-Maps/Data-Biophysical/Tree Sampling/Miami/" + file 
       iTree << read_iTree(file) if File.file? file and file!=".DS_Store"
     end
     print ".";$stdout.flush
@@ -186,6 +187,7 @@ if ARGV.length == 3
     print ".";$stdout.flush
     #Baltimore
     Dir.foreach "Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Baltimore/lawn plant cover data" do |file|
+      file = "Data-Parcel-Maps/Data-Biophysical/Plant Diversity/Vegetation data by Region/Baltimore/lawn plant cover data/"+file
       #Be careful of the diversity data that was accidentally placed in this folder...
       if File.file? file and file!=".DS_Store" and !file.include?("DIV")
         #Reference sites have a different data format
@@ -250,7 +252,11 @@ if ARGV.length == 3
 
     #Cleanup site names
     change_names!({"BA_"=>"BA_6503"}, city_parcel, :city_parcel)
-    change_names_regex!({"LAX"=>"LA", "MSP"=>"MN", "BAL"=>"BA", "MIA"=>"FL", "AZ"=>"PHX"}, city_parcel, :city_parcel)
+    change_names_regex!({".0"=>""}, city_parcel, :city_parcel)
+    change_names_regex!({"LAX"=>"LA", "MSP"=>"MN", "BAL"=>"BA", "MIA"=>"FL", "AZ"=>"PHX", "PX"=>"PHX", "_00"=>"_", "_0"=>"_"}, city_parcel, :city_parcel)
+    change_names!({"PHX_AG 3"=>"PHY_Ag3","PHX_AG Site 2"=>"PHX_Ag2","BOS_11400"=>"FL_11400","BOS_11465"=>"FL_11465","BOS_11801"=>"FL_11801","BOS_11823"=>"FL_11823","BOS_14405"=>"FL_14405","BOS_1663"=>"FL_1663","BOS_16943"=>"FL_16943","BOS_17089"=>"FL_17089","BOS_4666"=>"FL_4666","BOS_5276"=>"FL_5276","BOS_8486"=>"FL_8486","BOS_8963"=>"FL_8963","BOS_ADBarnes"=>"FL_ADBarnes","BOS_Barnacle"=>"FL_Barnacle","BOS_Simpson"=>"FL_Simpson","BOS_TradeWinds"=>"FL_Tradewinds","FL_A.D. Barnes"=>"FL_ADBarnes","FL_ADbarnes"=>"FL_ADBarnes","FL_Barnacle"=>"FL_Barnacle","FL_Simpsons"=>"FL_Simpson","LA_CSS1"=>"LA_LOMARidge","LA_CSS2"=>"LA_ShadyCanyon","LA_CSS3"=>"LA_BommerCanyon","LA_1"=>"LA_LOMARidge","LA_2"=>"LA_ShadyCanyon","LA_3"=>"LA_BommerCanyon","FL_Sugar Sand"=>"FL_SugarSand","MN_CedarCreek"=>"MN_NatRef_CedarCreek","MN_L3N.Ag"=>"MN_AgRef_UMN","MN_LostValley"=>"MN_NatRef_LostValleyPrairie","MN_STCROIX"=>"MN_NatRef_StCroixSavanna","MN_StCroix"=>"MN_NatRef_StCroixSavanna","MN_WolfsfeldWoods"=>"MN_NatRef_WolsfeldWoods","MN_WoodRill"=>"MN_NatRef_WoodRill","MN_Woodrill"=>"MN_NatRef_WoodRill","MN_X1.Ag"=>"MN_AgRef_UMN","MN_woodsril"=>"MN_NatRef_WoodRill","MN_woodsrill"=>"MN_NatRef_WoodRill","MN_CCF 1 CDR Ag (Corn) "=>"MN_AgRef_CedarCreek","MN_CCF 2 CDR Ag (Soy)"=>"MN_AgRef_CedarCreek","MN_CDR104"=>"MN_NatRef_CedarCreek","MN_CDR108"=>"MN_NatRef_CedarCreek","MN_CDRAgLoamCCF1"=>"MN_AgRef_CedarCreek","MN_CDRSoybeanCCF2"=>"MN_AgRef_CedarCreek","MN_Cedar Creek-plot 108 and 104"=>"MN_NatRef_CedarCreek","MN_Has1"=>"MN_NatRef_HelenAllison","MN_Has3"=>"MN_NatRef_HelenAllison","MN_Helen Alison-plot 1 and 3"=>"MN_NatRef_HelenAllison","MN_L-3N"=>"MN_AgRef_UMN","MN_L3N"=>"MN_AgRef_UMN","MN_Lost Valley Prairie"=>"MN_NatRef_LostValleyPrairie","MN_Lost Valley-plot 1 and 2"=>"MN_NatRef_LostValleyPrairie","MN_LostValleyForest1"=>"MN_NatRef_LostValleyPrairie","MN_LostValleyPrairie"=>"MN_NatRef_LostValleyPrairie","MN_St. Croix Savanna"=>"MN_NatRef_StCroixSavanna","MN_St. Croix- plot 1 and 2"=>"MN_NatRef_StCroixSavanna","MN_St.Croixplot1"=>"MN_NatRef_StCroixSavanna","MN_St.Croixplot2"=>"MN_NatRef_StCroixSavanna","MN_Wolsfeld Woods SNA"=>"MN_NatRef_WolsfeldWoods","MN_Wolsfeld-Plot 4 and 5"=>"MN_NatRef_WolsfeldWoods","MN_WolsfieldWoodsplot4"=>"MN_NatRef_WolsfeldWoods","MN_WolsfieldWoodsplot5"=>"MN_NatRef_WolsfeldWoods","MN_Wood Rill SNA"=>"MN_NatRef_WoodRill","MN_Wood-Rill-Plot 1 and 3"=>"MN_NatRef_WoodRill","MN_Woodrillplot1"=>"MN_NatRef_WoodRill","MN_Woodrillplot3"=>"MN_NatRef_WoodRill","MN_X-1"=>"MN_AgRef_UMN","MN_X-28"=>"MN_AgRef_UMN","MN_X1"=>"MN_AgRef_UMN","MN_X28"=>"MN_AgRef_UMN"}, city_parcel, :city_parcel)
+    change_names!({"BOS_Willowdaleforest"=>"BOS_WDF","BOS_WillowdaleForest"=>"BOS_WDF","BOS_WillowdalePasture"=>"BOS_WDP","BOS_BlueHillsForest"=>"BOS_BHF","BOS_BlueHillsPasture"=>"BOS_BHP","BOS_BlueHillsForest"=>"BOS_BHF","BOS_BlueHillsPasture"=>"BOS_BHP","PHX_AG 2"=>"PHX_Ag2","PHX_AG 1"=>"PHX_Ag1","BOS_MN"=>"BOS_MylesStandishPasture"#This exists because of the regex change two lines above
+                  }, city_parcel, :city_parcel)
     
     ########################
     #Taxonomy###############
@@ -311,6 +317,12 @@ if ARGV.length == 3
     add_to_data_base(city_parcel, db, "City_Parcel", nil)
     db.execute "CREATE TABLE MetaData (cpp_index TEXT, code TEXT, cat_one TEXT, cat_two TEXT, age TEXT, prev TEXT, meta_area TEXT)"
     add_to_data_base(metadata, db, "MetaData", nil)
+
+    ########################
+    #Flat-files#############
+    ########################
+    #puts "\nWriting flat-files..."
+    #`sqlite3 -batch -init sql.txt #{ARGV[0]}`
     
     puts "\nFinished!\n"
   end

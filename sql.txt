@@ -3,24 +3,50 @@
 .header ON
 .mode csv
 
---Dumb species lists for everything
+--Dumb pres/abs list
 -- ! Can't do iTree because there are no binomials in that dataset!...!
 .output pres_abs.csv
-SELECT sp_binomial, city_parcel
+SELECT sp_binomial, sp_binomial_clean, city_parcel
 FROM VegSurvey INNER JOIN Taxonomy ON VegSurvey.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on VegSurvey.cpp_index=City_Parcel.cpp_index;
-SELECT sp_binomial, city_parcel
+SELECT sp_binomial, sp_binomial_clean, city_parcel
 FROM LawnSurvey INNER JOIN Taxonomy ON LawnSurvey.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on LawnSurvey.cpp_index=City_Parcel.cpp_index;
-SELECT sp_binomial, city_parcel
+SELECT sp_binomial, sp_binomial_clean, city_parcel
 FROM VegTransect INNER JOIN Taxonomy ON VegTransect.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on VegTransect.cpp_index=VegTransect.cpp_index;
 
---Getting total species list out
+--Total species list
 .output species.csv
 SELECT * from Taxonomy;
 
---Getting overlap between tables
+--iTree
+-- ! Can't do join on Taxonony.sp_index because so few species have binomial names!
+.output iTree.csv
+SELECT *
+   FROM iTree INNER JOIN City_Parcel on iTree.cpp_index=City_Parcel.cpp_index;
+    
+--Phone survey
+.output phone.csv
+SELECT *
+   FROM PhoneSurvey INNER JOIN City_Parcel on PhoneSurvey.cpp_index=City_Parcel.cpp_index;
+
+--iButton data
+.output iButton.csv
+SELECT *
+   FROM Microclimate INNER JOIN City_Parcel on Microclimate.cpp_index=City_Parcel.cpp_index;
+
+--Soil baseline
+.output soil_basline.csv
+SELECT *
+   FROM SoilSurvey INNER JOIN City_Parcel on SoilSurvey.cpp_index=City_Parcel.cpp_index;
+
+--Soil microclimate
+.output soil_microclimate.csv
+SELECT *
+   FROM SoilMicroclimate INNER JOIN City_Parcel on SoilMicroclimate.cpp_index=City_Parcel.cpp_index;
+   
+--Table overlap
 .output overlap.csv
 SELECT
    City_Parcel.*,
@@ -30,6 +56,14 @@ SELECT
    (SELECT COUNT(*) FROM iTree WHERE cpp_index = City_Parcel.cpp_index) AS iTreeCount,
    (SELECT COUNT(*) FROM SoilMicroclimate WHERE cpp_index = City_Parcel.cpp_index) AS SoilClimCount,
    (SELECT COUNT(*) FROM Microclimate WHERE cpp_index = City_Parcel.cpp_index) AS MicroCount,
-   (SELECT COUNT(*) FROM SoilSurvey WHERE cpp_index = City_Parcel.cpp_index) AS SoilCount
+   (SELECT COUNT(*) FROM SoilSurvey WHERE cpp_index = City_Parcel.cpp_index) AS SoilCount,
+   (SELECT COUNT(*) FROM MetaData WHERE cpp_index = City_Parcel.cpp_index) AS MetaCount
 FROM 
    City_Parcel;
+
+--Metadata
+.output metadata.csv
+SELECT *
+   FROM MetaData INNER JOIN City_Parcel on MetaData.cpp_index=City_Parcel.cpp_index;
+
+.exit

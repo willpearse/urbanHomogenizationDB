@@ -319,7 +319,7 @@ def read_lawn_survey(file_name, format)
     curr_file.each do |line|
       if line[1] and line[1]!="Case ID"
         (4..15).each do |i|
-          if line[i] then output << make_entry("FL", line[1]+"_"+curr_file[2][i], line[3], "", -1, line[i], true, curr_file[2][i]) end
+          if line[i] then output << make_entry("FL", line[1], line[3], "", -1, line[i], true, curr_file[2][i]) end
         end
       end
     end
@@ -552,7 +552,7 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
     end
     it "Loads Miami data correctly" do
       temp = read_lawn_survey("test_files/miami_abundance.xlsx", "miami")
-      assert temp.data == {:city_parcel=>["FL_5296", "FL_5296", "FL_5296", "FL_5296", "FL_5296", "FL_Okeeheelee_T-5-1", "FL_Okeeheelee_T-7-2"], :sp_binomial=>["Bidens alba", "Bidens alba", "Bidens alba", "Bidens alba", "Bidens alba", "Dichanthelium commutatum", "Dichanthelium commutatum"], :sp_common=>["", "", "", "", "", "", ""], :location=>["F1", "F2", "F3", "B1", "B3", -1, -1], :abundance=>[4, 6, 4, 3, 2, 6, 1], :transect=>["", "", "", "", "", "T-5-1", "T-7-2"]}
+      assert temp.data == {:city_parcel=>["FL_5296", "FL_5296", "FL_5296", "FL_5296", "FL_5296", "FL_Okeeheelee", "FL_Okeeheelee"], :sp_binomial=>["Bidens alba", "Bidens alba", "Bidens alba", "Bidens alba", "Bidens alba", "Dichanthelium commutatum", "Dichanthelium commutatum"], :sp_common=>["", "", "", "", "", "", ""], :location=>["F1", "F2", "F3", "B1", "B3", -1, -1], :abundance=>[4, 6, 4, 3, 2, 6, 1], :transect=>["", "", "", "", "", "T-5-1", "T-7-2"]}
       assert temp.nrow == 7
       assert temp.ncol == 6
       assert temp.col_names == [:city_parcel, :sp_binomial, :sp_common, :location, :abundance, :transect]
