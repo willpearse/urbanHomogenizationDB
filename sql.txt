@@ -16,6 +16,14 @@ SELECT sp_binomial, sp_binomial_clean, city_parcel
 FROM VegTransect INNER JOIN Taxonomy ON VegTransect.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on VegTransect.cpp_index=VegTransect.cpp_index;
 
+.output pres_abs_excel_transects.csv
+SELECT sp_binomial, sp_binomial_clean, city_parcel
+FROM VegSurvey INNER JOIN Taxonomy ON VegSurvey.sp_index=Taxonomy.sp_index
+     INNER JOIN City_Parcel on VegSurvey.cpp_index=City_Parcel.cpp_index;
+SELECT sp_binomial, sp_binomial_clean, city_parcel
+FROM LawnSurvey INNER JOIN Taxonomy ON LawnSurvey.sp_index=Taxonomy.sp_index
+     INNER JOIN City_Parcel on LawnSurvey.cpp_index=City_Parcel.cpp_index;
+
 --Total species list
 .output species.csv
 SELECT * from Taxonomy;
