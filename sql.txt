@@ -24,6 +24,11 @@ SELECT sp_binomial, sp_binomial_clean, city_parcel
 FROM LawnSurvey INNER JOIN Taxonomy ON LawnSurvey.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on LawnSurvey.cpp_index=City_Parcel.cpp_index;
 
+.output lawn_survey.csv
+SELECT *
+FROM LawnSurvey INNER JOIN Taxonomy ON LawnSurvey.sp_index=Taxonomy.sp_index
+     INNER JOIN City_Parcel on LawnSurvey.cpp_index=City_Parcel.cpp_index;
+
 --Total species list
 .output species.csv
 SELECT * from Taxonomy;
