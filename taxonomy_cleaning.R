@@ -1,7 +1,13 @@
-#Setup; load from a (recent) dump of the taxonomy table
+#Setup; load from the SQL of the taxonomy table
+require(RSQLite)
 require(Taxonstand)
 require(testdat)
-species <- read.csv("species_dump.csv")
+require(willeerd)
+require(ape)
+
+handle <- dbConnect(dbDriver("SQLite"), dbname="~/Dropbox/homogenization/urbanHomogenizationDB/v4.db")
+t <- dbSendQuery(handle, "SELECT * FROM Taxonomy")
+species <- fetch(t, n=-1)
 db.names <- as.character(species[,1])
 
 #Basic pre-processing to remove sp., fix character encoding, etc.
@@ -18,6 +24,8 @@ lookup$search.term <- gsub(" ", " ", lookup$search.term, fixed=TRUE)
 lookup$search.term <- gsub("  ", " ", lookup$search.term, fixed=TRUE)
 lookup$search.term <- gsub("  ", " ", lookup$search.term, fixed=TRUE)
 lookup$search.term <- gsub(" × ", " x ", lookup$search.term, fixed=TRUE)
+lookup$search.term <- gsub("^[ ]*", "", lookup$search.term)
+lookup$search.term <- gsub("[ ]*$", "", lookup$search.term)
 lookup$search.term <- sanitize_text(lookup$search.term)
 
 
@@ -44,40 +52,38 @@ lookup$gen.search <- as.character(lookup$gen.search)
 genera.only <- setdiff(genera.only, lookup$gen.search[lookup$final.cut==TRUE])
 
 #Do the search
-plant.list <- with(lookup[lookup$final.cut,], TPL(splist=paste(gen.search, sp.search)))
-
+plant.list <- with(lookup[lookup$final.cut,], TPL(splist=paste(gen.search, sp.search), corr=TRUE))
+lookup$search.term <- with(lookup, paste(gen.search, sp.search))
 #save.image("names.RData")
 
-#Fill in the results of the search
-lookup$tpl.binomial <- lookup$tpl.family <- lookup$tpl.genus <- rep("NA", nrow(lookup))
+#Fill in species that weren't searched because their search.term was a duplicated
+lookup$tpl.binomial <- NA
 lookup$tpl.binomial[lookup$final.cut] <- with(plant.list, paste(as.character(New.Genus), as.character(New.Species), sep="_"))
-lookup$tpl.genus[lookup$final.cut] <- with(plant.list, as.character(New.Genus))
-lookup$tpl.family[lookup$final.cut] <- with(plant.list, as.character(Family))
-lookup$tpl.authority [lookup$final.cut] <- with(plant.list, as.character(Authority))
-#Now need to handle in the species with duplicate real names, but different database names
 dups <- duplicated(lookup$sp.search)
 for(i in seq(nrow(lookup))){
   if(dups[i]){
-    which.searched <- which(lookup$sp.search==lookup$sp.search[i])[1]
+    which.searched <- which(lookup$search.term==lookup$search.term[i])[1]
     lookup$tpl.binomial[i] <- lookup$tpl.binomial[which.searched]
-    lookup$tpl.genus[i] <- lookup$tpl.genus[which.searched]
-    lookup$tpl.family[i] <- lookup$tpl.family[which.searched]
-    lookup$tpl.authority[i] <- lookup$tpl.authority[which.searched]
-  }
-}
-#Now need to handle genus-only entries
-for(i in seq(nrow(lookup))){
-  if(is.na(lookup$sp.search[i])){
-    t.lookup <- lookup[lookup$gen.search == lookup$gen.search[i] & lookup$final.cut,]
-    if(nrow(t.lookup) > 0){
-      lookup$tpl.genus[i] <- t.lookup$tpl.genus[1]
-      lookup$tpl.binomial[i] <- paste(lookup$tpl.genus[i], "unknown", sep="_")
-      lookup$tpl.family[i] <- t.lookup$tpl.family[1]
-      lookup$tpl.authority[i] <- "unknown"
-    }
   }
 }
 
-#Write it out!
-output <- data.frame(seq(nrow(lookup)), lookup$db.names, lookup$tpl.binomial)
-write.csv(output, "taxonomy.csv", row.names=FALSE, col.names=FALSE, quote=FALSE)
+#Sadly, now I have to go through and add-in genus_sp as something, because otherwise we lose a metric fuck-tonne of species
+# - I'm going to assume that, if someone couldn't spell the genus properly, they're a complete moron and should be ignored
+lookup$tpl.binomial <- ifelse(lookup$final.cut==FALSE & (lookup$sp.search=="sp"|lookup$sp.search=="spp"|lookup$sp.search==""|is.na(lookup$sp.search)), paste(lookup$gen.search,"sp",sep="_"), lookup$tpl.binomial)
+
+#Writing out
+output <- data.frame(seq(nrow(lookup))-1, lookup$db.names, lookup$tpl.binomial)
+output <- as.matrix(output)
+colnames(output) <- NULL
+rownames(output) <- NULL
+write.table(output, "~/Dropbox/homogenization/urbanHomogenizationDB/taxonomy.csv", row.names=FALSE, col.names=FALSE, quote=FALSE, sep=",")
+
+#Let's build us a phylogeny
+tree <- read.tree("~/Dropbox/SESYNC.Macroevolution.ES.Trees/Phylos/Tank(Zanne)Tree/Vascular_Plants_rooted.dated.tre")
+tree$node.label <- NULL
+spp <- unique(lookup$tpl.binomial)
+spp <- spp[!is.na(spp)]
+tree <- congeneric.merge(spp, tree)
+tree <- drop.tip(tree, setdiff(tree$tip.label, spp))
+write.tree(tree, "~/Dropbox/homogenization/urbanHomogenizationDB/phylogeny.tre")
+

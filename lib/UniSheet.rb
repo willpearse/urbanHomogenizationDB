@@ -23,6 +23,10 @@ class UniSheet
         @file_type = "csv"
         @csv = CSV.read @file_name
         return @file_type
+      elsif file_name[".txt"]
+        @file_type = "tab-delim"
+        @csv = CSV.read(@file_name, {:col_sep=>"\t"})
+        return @file_type
       elsif file_name[".xlsx"]
         @xlsx_book = RubyXL::Parser.parse file_name
         @xlsx_sheet = @xlsx_book.worksheets[0].extract_data
@@ -45,12 +49,12 @@ class UniSheet
   
   #Iterator
   def each(&block)
-    case
-    when @file_type=="csv"
+    case @file_type
+    when "csv", "tab-delim"
       @csv.each(&block)
-    when @file_type=="xls"
+    when "xls"
       @excel_sheet.each(&block)
-    when @file_type=="xlsx"
+    when "xlsx"
       @xlsx_sheet.each(&block)
     else
       raise RuntimeError, "File #{@file_name} used in improperly defined UniSheet class"
@@ -59,12 +63,12 @@ class UniSheet
   
   #Pull out a row; returns an array so columns can also be called in this way
   def [](index)
-    case
-    when @file_type=="csv"
+    case @file_type
+    when "csv","tab-delim"
       return @csv[index]
-    when @file_type=="xls"
+    when "xls"
       return @excel_sheet.row(index).to_a
-    when @file_type=="xlsx"
+    when "xlsx"
       return @xlsx_sheet[index]
     else
       raise RuntimeError, "File #{@file_name} used in improperly defined UniSheet class"
@@ -101,6 +105,7 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
   describe UniSheet do
     before do
       @csv_test = UniSheet.new "test_files/dataFrame.csv"
+      @tab_test = UniSheet.new "test_files/dataFrame.txt"
       @xls_test = UniSheet.new "test_files/dataFrame.xls"
       @xlsx_test = UniSheet.new "test_files/dataFrame.xlsx"
     end
@@ -115,6 +120,19 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
       end
       it "Doesn't have sheets" do
         proc {@csv_test.set_sheet(1)}.must_raise RuntimeError
+      end
+    end
+    describe "When loading a txt (tab-delim) file" do
+      it "Will iterate correctly" do
+        temp = []
+        @tab_test.each {|line| temp << line[0]}
+        assert_equal ["Name", "John Ward", "Tom Ensom"], temp
+      end
+      it "Will load a row correctly" do
+        @tab_test[0].must_equal ["Name", "Emailed?", "Confirmed?", "Emailed Re. Payment?","Paid?"]
+      end
+      it "Doesn't have sheets" do
+        proc {@tab_test.set_sheet(1)}.must_raise RuntimeError
       end
     end
     describe "When loading an XLS file" do

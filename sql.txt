@@ -14,7 +14,7 @@ FROM LawnSurvey INNER JOIN Taxonomy ON LawnSurvey.sp_index=Taxonomy.sp_index
      INNER JOIN City_Parcel on LawnSurvey.cpp_index=City_Parcel.cpp_index;
 SELECT sp_binomial, sp_binomial_clean, city_parcel
 FROM VegTransect INNER JOIN Taxonomy ON VegTransect.sp_index=Taxonomy.sp_index
-     INNER JOIN City_Parcel on VegTransect.cpp_index=VegTransect.cpp_index;
+     INNER JOIN City_Parcel on VegTransect.cpp_index=City_Parcel.cpp_index;
 
 .output pres_abs_excel_transects.csv
 SELECT sp_binomial, sp_binomial_clean, city_parcel
@@ -67,8 +67,6 @@ SELECT
    (SELECT COUNT(*) FROM VegSurvey WHERE cpp_index = City_Parcel.cpp_index) AS VegCount,
    (SELECT COUNT(*) FROM PhoneSurvey WHERE cpp_index = City_Parcel.cpp_index) AS PhoneCount,
    (SELECT COUNT(*) FROM iTree WHERE cpp_index = City_Parcel.cpp_index) AS iTreeCount,
-   (SELECT COUNT(*) FROM SoilMicroclimate WHERE cpp_index = City_Parcel.cpp_index) AS SoilClimCount,
-   (SELECT COUNT(*) FROM Microclimate WHERE cpp_index = City_Parcel.cpp_index) AS MicroCount,
    (SELECT COUNT(*) FROM SoilSurvey WHERE cpp_index = City_Parcel.cpp_index) AS SoilCount,
    (SELECT COUNT(*) FROM MetaData WHERE cpp_index = City_Parcel.cpp_index) AS MetaCount
 FROM 

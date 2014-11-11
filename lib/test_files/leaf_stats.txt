@@ -1,0 +1,3 @@
+original.file	seg.file	perimeter	surface.area	dissection	compactness
+Baltimore_A 04-06-2013 9_9_9_9_3.png	Baltimore_A 04-06-2013 9_9_9_9_3_0.jpg	1700.17889502	35590	0.0492491498166	81.219676175
+Baltimore_A 04-06-2013 9_9_9_9_3.png	Baltimore_A 04-06-2013 9_9_9_9_3_1.jpg	951.447834896	21242	0.0938610550199	42.6161840942

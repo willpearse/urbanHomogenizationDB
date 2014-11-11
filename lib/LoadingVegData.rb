@@ -11,14 +11,14 @@ def read_iTree(file_name, format="default")
   case
   when format.downcase == "default"
     curr_file.each do |line|
-      if line[0] and line[0] != "City ID"
+      if line[0] and line[0] != "City ID" and line[0] != "ID Code" and line[0] != "Date" and line[0] != "City_Parcel" and line[0] != "CityID"
         output << {:city_parcel=>[[line[0], line[1]].join("_")],:tree_no=>[line[5]],:sp_binomial=>[""],:sp_common=>[line[6]],:dbh=>[line[7]],:height=>[line[8]],:ground_area=>[line[9]],:condition=>[line[10]],:leaf_area=>[line[11]],:leaf_biomass=>[line[12]],:leaf_area_index=>[line[13]],:carbon_storage=>[line[14]],:gross_carbon_seq=>[line[15]],:money_value=>[line[16]],:street=>[line[17]],:native=>[line[18]],:parcel_area=>[line[3]],:impervious_parcel_area=>[line[4]]}
       end
     end    
   when format.downcase == "saltlake"
     curr_file.set_sheet 3
     curr_file.each do |line|
-      if line[0] and line[0] != "ID Code"
+      if line[0] and line[0] != "ID Code" and line[0] != "City_Parcel"
         (5..16).each do |i|
           unless line[i]==0 then output << {:city_parcel=>[["SL", line[0]].join("_")],:tree_no=>[""],:sp_binomial=>[""],:sp_common=>[line[2]],:dbh=>[line[i]],:height=>["4"],:ground_area=>[""],:condition=>[""],:leaf_area=>[""],:leaf_biomass=>[""],:leaf_area_index=>[""],:carbon_storage=>[""],:gross_carbon_seq=>[""],:money_value=>[""],:street=>[""],:native=>[""],:parcel_area=>[""],:impervious_parcel_area=>[""]} end
         end
@@ -26,14 +26,14 @@ def read_iTree(file_name, format="default")
     end
   when format.downcase == "la"
     curr_file.each do |line|
-      if line[0] and line[0] != "City ID"
+      if line[0] and line[0] != "City ID" and line[0] != "City_Parcel"
         output << {:city_parcel=>[[line[0], line[1]].join("_")],:tree_no=>[line[3]],:sp_binomial=>[line[4]],:sp_common=>[""],:dbh=>[line[5]],:height=>[line[6]],:ground_area=>[line[7]],:condition=>[line[8]],:leaf_area=>[line[9]],:leaf_biomass=>[line[10]],:leaf_area_index=>[line[11]],:carbon_storage=>[line[12]],:gross_carbon_seq=>[line[13]],:money_value=>[line[14]],:street=>[line[15]],:native=>[line[16]],:parcel_area=>[""],:impervious_parcel_area=>[""]}
       end
     end
   when
     format.downcase == "phoenix"
     curr_file.each do |line|
-      if line[0] and line[0] != "Date"
+      if line[0] and line[0] != "Date" and line[0] != "City_Parcel"
         (7..12).each do |i|
           unless line[i]=="" or line[i]==nil then output << {:city_parcel=>[["PX", line[1]].join("_")],:tree_no=>[""],:sp_binomial=>[line[3]],:sp_common=>[line[2]],:dbh=>[line[i]],:height=>[line[13]],:ground_area=>[""],:condition=>[""],:leaf_area=>[""],:leaf_biomass=>[""],:leaf_area_index=>[""],:carbon_storage=>[""],:gross_carbon_seq=>[""],:money_value=>[""],:street=>[""],:native=>[""],:parcel_area=>[""],:impervious_parcel_area=>[""]} end
         end
@@ -167,6 +167,7 @@ def read_veg_survey(file_name, format, name=nil, verbose=true)
     curr_file.each do |line|
       if line[0] and line[0] != "Case ID"
         output << make_phoenix_entry(line[0], line[2], line[3], line[6], line[7], line[5], line[1])
+        if line[0] == "" then puts file end
       end
     end
     
@@ -186,7 +187,7 @@ def read_veg_survey(file_name, format, name=nil, verbose=true)
       curr_file.each do |line|
         if line[1] and line[0]!="Date"
           (6..10).each do |i|
-            if line[i] then output << make_entry("LA", line[1], line[2], [line[3],line[4],line[5]].join("_"), i-6) end
+            if line[i] then output << make_entry("LA", line[1], line[2], [line[3],line[4]].join("_"), i-6, line[i]) end
           end
         end
       end
@@ -272,6 +273,9 @@ def read_lawn_survey(file_name, format)
   output = DataFrame.new({:city_parcel=>[], :sp_binomial=>[], :sp_common=>[], :location=>[], :abundance=>[], :transect=>[]})
   case
   when (format.downcase == "minnesota" or format.downcase == "saltlake")
+    if format.downcase == "saltlake"
+      curr_file.set_sheet 2
+    end
     curr_file.each do |line|
       if line[0] and line[0]!= "Site" 
         (4..9).each do |i|
@@ -329,6 +333,7 @@ def read_lawn_survey(file_name, format)
     curr_file.each do |line|
       if line[0] and line[0] != "Date" and line[0]!=nil
         output << make_entry("PHX", line[1].to_s, line[3], line[2], line[4], line[5], true)
+        if line[1] == "" then puts file end
       end
     end
     #Reference sites
@@ -457,7 +462,7 @@ if File.identical?(__FILE__, $PROGRAM_NAME)
     end
     it "Loads LA urba data correctly" do
       temp = read_veg_survey("test_files/la_veg.xlsx", "la")
-      assert temp.data == {:city_parcel=>["LA_1404", "LA_2259", "LA_2259"], :sp_common=>["Tree aeonium", "Tree aeonium", "Green pinwheel"], :sp_binomial=>["Aeonium_arboreum_", "Aeonium_arboreum_", "Aeonium_decorum_"], :sp_native=>["", "", ""], :location=>["perennialGarden", "perennialGarden", "perennialGarden"], :cultivation=>["", "", ""], :notes=>["", "", ""]}
+      assert temp.data == {:city_parcel=>["LA_1404", "LA_2259", "LA_2259"], :sp_common=>["Tree aeonium", "Tree aeonium", "Green pinwheel"], :sp_binomial=>["Aeonium_arboreum", "Aeonium_arboreum", "Aeonium_decorum"], :sp_native=>["", "", ""], :location=>["perennialGarden", "perennialGarden", "perennialGarden"], :cultivation=>["C-1 (pot), C-2", "S-5", "C-2"], :notes=>["", "", ""]}
       assert temp.nrow == 3
       assert temp.ncol == 7
       assert temp.col_names == [:city_parcel, :sp_common, :sp_binomial, :sp_native, :location, :cultivation, :notes]
